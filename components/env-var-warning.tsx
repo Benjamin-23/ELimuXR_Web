@@ -8,7 +8,7 @@ export function EnvVarWarning() {
       <Badge variant={"outline"} className="font-normal">
         Supabase environment variables required
       </Badge>
-      <div className="flex gap-2">
+      <div className="flex gap-2 bg-red-500">
         <Button
           asChild
           size="sm"
