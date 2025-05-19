@@ -30,21 +30,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={geistSans.className} suppressHydrationWarning>
-      <body className="bg-background text-foreground">
+      <body className="bg-muted text-foreground w-screen">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          <main className=" flex flex-col">
-            <div className="flex-1 w-full flex flex-col">
-              <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-                <div className="w-full max-w-5xl flex  p-3 px-5 text-sm justify-end">
-                  {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />}
-                </div>
-              </nav>
-              <div className="flex flex-col max-w-5xl">{children}</div>
+          <main className=" flex flex-col overflow-x-hiddens w-screen  h-[100vh]">
+            <div className="flex-1 flex flex-col w-screen">
+              <div className="flex flex-col ">{children}</div>
             </div>
           </main>
         </ThemeProvider>

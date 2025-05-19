@@ -152,10 +152,10 @@ export default function StudyPage() {
       : [];
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-[90vh] bg-muted w-full">
       {/* Main Content */}
-      <div className="flex-1 p-6 overflow-y-auto">
-        <div className="max-w-6xl mx-auto">
+      <div className="flex-1  overflow-y-auto w-full ">
+        <div className="max-w-8xl mx-auto">
           {/* Grade/Subject/Unit/Topic Selection */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <Select onValueChange={setGrade} value={grade}>

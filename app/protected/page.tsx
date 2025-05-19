@@ -1,3 +1,4 @@
+import Header from "@/components/hero";
 import Sidebar from "@/components/side_bar";
 import FetchDataSteps from "@/components/tutorial/fetch-data-steps";
 import { createClient } from "@/utils/supabase/server";
@@ -14,5 +15,9 @@ export default async function ProtectedPage() {
   if (!user) {
     return redirect("/sign-in");
   }
-  return redirect("/protected/dashboard");
+  return (
+    <div>
+      <Header />
+    </div>
+  );
 }

@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import { url } from "node:inspector/promises";
 // components/Sidebar.js
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FiHome,
   FiBook,
@@ -19,14 +19,36 @@ import {
   FiLogOut,
   FiChevronLeft,
   FiChevronRight,
+  FiMenu,
+  FiX,
 } from "react-icons/fi";
 
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [activeItem, setActiveItem] = useState("Home");
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth < 768) {
+        setCollapsed(true);
+      }
+    };
+
+    // Initial check
+    checkScreenSize();
+
+    // Add event listener for window resize
+    window.addEventListener("resize", checkScreenSize);
+
+    // Cleanup event listener
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
 
   const menuItems = [
-    { name: "Home", icon: <FiHome />, url: "/protected/dashboard/home" },
+    { name: "Home", icon: <FiHome />, url: "/protected/dashboard" },
     { name: "Study", icon: <FiBook />, url: "/protected/dashboard/study" },
     {
       name: "Courses",
@@ -76,9 +98,84 @@ const Sidebar = () => {
     setCollapsed(!collapsed);
   };
 
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const handleNavigation = (item: any) => {
+    setActiveItem(item.name);
+    if (isMobile) {
+      setMobileMenuOpen(false);
+    }
+    redirect(item.url);
+  };
+
+  // For mobile: render a hamburger menu that opens a full-screen overlay
+  if (isMobile) {
+    return (
+      <>
+        <button
+          onClick={toggleMobileMenu}
+          className="fixed top-4 left-4 z-50 p-2 rounded-full bg-primary shadow-md"
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+        </button>
+
+        {/* Mobile menu overlay */}
+        <div
+          className={`fixed inset-0 bg-primary z-40 transform transition-transform duration-300 ease-in-out ${
+            mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-center p-4 border-b">
+              <h2 className="text-xl font-bold text-blue-600">ElimuXR</h2>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              <nav className="mt-6">
+                <ul className="space-y-2 px-4">
+                  {menuItems.map((item) => (
+                    <li key={item.name}>
+                      <button
+                        onClick={() => handleNavigation(item)}
+                        className={`flex items-center w-full p-4 rounded-lg transition-colors ${
+                          activeItem === item.name
+                            ? "bg-blue-50 text-blue-600"
+                            : "hover:bg-muted"
+                        }`}
+                      >
+                        <span className="text-lg">{item.icon}</span>
+                        <span className="ml-3 font-medium">{item.name}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+
+              <div className="p-4 border-t mt-6">
+                <button
+                  onClick={() => console.log("Logout")}
+                  className="flex items-center w-full p-4 rounded-lg text-gray-700 hover:bg-gray-100"
+                >
+                  <FiLogOut className="text-lg" />
+                  <span className="ml-3 font-medium bg-secondary">Logout</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // For desktop: render the regular sidebar
   return (
     <div
-      className={`flex flex-col h-screen shadow-lg transition-all duration-300 bg-primary ${collapsed ? "w-20" : "w-64"}`}
+      className={`flex flex-col h-screen shadow-lg transition-all duration-300 bg-muted  ${
+        collapsed ? "w-20" : "w-fit"
+      }`}
     >
       {/* Sidebar Header */}
       <div className="flex items-center justify-between p-4 border-b">
@@ -100,8 +197,12 @@ const Sidebar = () => {
             {menuItems.map((item) => (
               <li key={item.name}>
                 <button
-                  onClick={() => redirect(item.url)}
-                  className={`flex items-center w-full p-3 rounded-lg transition-colors ${activeItem === item.name ? "bg-blue-50 text-blue-600" : " hover:bg-gray-100"}`}
+                  onClick={() => handleNavigation(item)}
+                  className={`flex items-center w-full p-3 rounded-lg transition-colors ${
+                    activeItem === item.name
+                      ? "bg-blue-50 text-blue-600"
+                      : " hover:bg-muted"
+                  }`}
                 >
                   <span className="text-lg">{item.icon}</span>
                   {!collapsed && (
@@ -113,10 +214,12 @@ const Sidebar = () => {
           </ul>
         </nav>
 
-        <div className="p-4 border-t">
+        <div className="p-4 border-t ">
           <button
             onClick={() => console.log("Logout")} // Replace with your logout function
-            className={`flex items-center w-full p-3 rounded-lg text-gray-700 hover:bg-gray-100 ${collapsed ? "justify-center" : ""}`}
+            className={`flex items-center w-full p-3 rounded-lg bg-background  hover:bg-background ${
+              collapsed ? "justify-center" : ""
+            }`}
           >
             <FiLogOut className="text-lg" />
             {!collapsed && <span className="ml-3 font-medium">Logout</span>}

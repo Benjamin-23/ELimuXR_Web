@@ -19,6 +19,15 @@ export default async function ProtectedPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("full_name, phone_number, email")
+    .eq("email", user?.email)
+    .single();
+  if (userError) {
+    console.error("Error fetching user details:", userError);
+  }
   const enrolledCourses = [
     {
       id: 1,
@@ -89,22 +98,22 @@ export default async function ProtectedPage() {
     },
   ];
   return (
-    <ScrollArea className=" h-[90vh] w-full ">
+    <ScrollArea className="h-[90vh] w-fit">
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Banner */}
-        <section className="mb-10">
+        <section className="mb-8">
           <Card className="border-none shadow-none bg-gradient-to-r from-primary/10 to-blue-100">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                 <div>
-                  <h1 className="text-2xl font-bold mb-2">
-                    Welcome back, {user?.email}!
+                  <h1 className="text-xl sm:text-2xl font-bold mb-2 break-words">
+                    Welcome back, {userData?.full_name || "Guest"}!
                   </h1>
-                  <p className="text-muted-foreground">
+                  <p className="text-sm sm:text-base text-muted-foreground">
                     Continue your learning journey where you left off
                   </p>
                 </div>
-                <Button className="mt-4 md:mt-0">
+                <Button className="mt-4 sm:mt-0 text-sm sm:text-base w-full sm:w-auto">
                   Continue Learning <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
@@ -113,34 +122,36 @@ export default async function ProtectedPage() {
         </section>
 
         {/* Current Progress */}
-        <section className="mb-12">
-          <h2 className="text-xl font-bold mb-6 flex items-center">
+        <section className="mb-10">
+          <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center">
             <BookOpen className="h-5 w-5 mr-2 text-primary" />
             Your Courses
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {enrolledCourses.map((course) => (
               <Card
                 key={course.id}
                 className="hover:shadow-md transition-shadow"
               >
-                <CardHeader className="pb-3">
-                  <div className="h-40 bg-gray-100 rounded-lg mb-3 overflow-hidden">
+                <CardHeader className="pb-2 sm:pb-3">
+                  <div className="h-32 sm:h-40 bg-gray-100 rounded-lg mb-3 overflow-hidden">
                     <img
                       src={course.image}
                       alt={course.title}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <CardTitle className="text-lg">{course.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
+                  <CardTitle className="text-base sm:text-lg line-clamp-1">
+                    {course.title}
+                  </CardTitle>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     By {course.instructor}
                   </p>
                 </CardHeader>
                 <CardContent>
                   <div className="mb-3">
-                    <div className="flex justify-between text-sm mb-1">
+                    <div className="flex justify-between text-xs sm:text-sm mb-1">
                       <span>Progress: {course.progress}%</span>
                       <span>
                         {course.completedLessons}/{course.totalLessons} lessons
@@ -148,13 +159,15 @@ export default async function ProtectedPage() {
                     </div>
                     <Progress value={course.progress} className="h-2" />
                   </div>
-                  <p className="text-sm text-muted-foreground flex items-center">
+                  <p className="text-xs sm:text-sm text-muted-foreground flex items-center">
                     <Clock className="h-3 w-3 mr-1" />
-                    Last accessed: {course.lastAccessed}
+                    <span className="truncate">
+                      Last: {course.lastAccessed}
+                    </span>
                   </p>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full text-sm">
                     Continue
                   </Button>
                 </CardFooter>
@@ -164,47 +177,56 @@ export default async function ProtectedPage() {
         </section>
 
         {/* Recommended Courses */}
-        <section className="mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold flex items-center">
+        <section className="mb-10">
+          <div className="flex justify-between items-center mb-4 sm:mb-6">
+            <h2 className="text-lg sm:text-xl font-bold flex items-center">
               <Star className="h-5 w-5 mr-2 text-yellow-500" />
               Recommended For You
             </h2>
-            <Button variant="ghost" className="text-primary">
-              See All <ChevronRight className="ml-2 h-4 w-4" />
+            <Button variant="ghost" className="text-primary text-sm p-1 sm:p-2">
+              See All <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6">
             {recommendedCourses.map((course) => (
               <Card
                 key={course.id}
                 className="hover:shadow-md transition-shadow"
               >
-                <div className="flex flex-col md:flex-row">
-                  <div className="md:w-1/3 h-40 bg-gray-100 overflow-hidden">
+                <div className="flex flex-col sm:flex-row">
+                  <div className="w-full sm:w-1/3 h-40 bg-gray-100 overflow-hidden">
                     <img
                       src={course.image}
                       alt={course.title}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="md:w-2/3">
-                    <CardHeader>
-                      <CardTitle className="text-lg">{course.title}</CardTitle>
+                  <div className="w-full sm:w-2/3">
+                    <CardHeader className="py-2 px-4">
+                      <CardTitle className="text-base sm:text-lg">
+                        {course.title}
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-sm mb-3">{course.description}</p>
-                      <div className="flex items-center text-sm text-muted-foreground">
+                    <CardContent className="py-2 px-4">
+                      <p className="text-xs sm:text-sm mb-3">
+                        {course.description}
+                      </p>
+                      <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
                         <Star className="h-4 w-4 mr-1 text-yellow-500 fill-yellow-500" />
                         {course.rating} ({course.students} students)
                       </div>
                     </CardContent>
-                    <CardFooter>
-                      <Button variant="outline" className="mr-3">
+                    <CardFooter className="py-2 px-4 flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        className="text-xs sm:text-sm flex-1 sm:flex-none sm:mr-3"
+                      >
                         Preview
                       </Button>
-                      <Button>Enroll Now</Button>
+                      <Button className="text-xs sm:text-sm flex-1 sm:flex-none">
+                        Enroll Now
+                      </Button>
                     </CardFooter>
                   </div>
                 </div>
@@ -215,23 +237,23 @@ export default async function ProtectedPage() {
 
         {/* Achievements */}
         <section>
-          <h2 className="text-xl font-bold mb-6 flex items-center">
+          <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center">
             <Award className="h-5 w-5 mr-2 text-primary" />
             Your Achievements
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {achievements.map((achievement, index) => (
               <Card key={index} className="hover:shadow-md transition-shadow">
-                <CardHeader className="flex flex-row items-center space-x-4 space-y-0 pb-3">
-                  <div className="bg-primary/10 p-2 rounded-full">
+                <CardHeader className="flex flex-row items-center space-x-3 sm:space-x-4 space-y-0 p-3 sm:p-4 pb-2 sm:pb-3">
+                  <div className="bg-primary/10 p-2 rounded-full flex-shrink-0">
                     {achievement.icon}
                   </div>
-                  <div>
-                    <CardTitle className="text-base">
+                  <div className="min-w-0">
+                    <CardTitle className="text-sm sm:text-base truncate">
                       {achievement.name}
                     </CardTitle>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground truncate">
                       {achievement.date}
                     </p>
                   </div>

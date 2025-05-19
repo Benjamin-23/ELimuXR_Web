@@ -1,5 +1,6 @@
 "use client";
 import Head from "next/head";
+import { redirect } from "next/navigation";
 import { useState } from "react";
 import {
   FiPlay,
@@ -9,12 +10,14 @@ import {
   FiMail,
   FiPhone,
 } from "react-icons/fi";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader } from "./ui/card";
 
 export default function Header() {
   const [activeTab, setActiveTab] = useState("math");
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-background">
       <Head>
         <title>MathSciLearn | Grades 7-9 Integrated Math & Science</title>
         <meta
@@ -24,11 +27,11 @@ export default function Header() {
       </Head>
 
       {/* Navigation */}
-      <nav className="bg-white shadow-sm">
+      <nav className="bg-secondary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center">
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-primary">
                 MathSciLearn
               </div>
             </div>
@@ -36,25 +39,28 @@ export default function Header() {
               <div className="ml-10 flex items-center space-x-4">
                 <a
                   href="#features"
-                  className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600"
+                  className="px-3 py-2 text-sm font-medium text-secondary-foreground hover:text-primary"
                 >
                   Features
                 </a>
                 <a
                   href="#courses"
-                  className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600"
+                  className="px-3 py-2 text-sm font-medium text-secondary-foreground hover:text-primary"
                 >
                   Courses
                 </a>
                 <a
                   href="#testimonials"
-                  className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600"
+                  className="px-3 py-2 text-sm font-medium text-secondary-foreground hover:text-primary"
                 >
                   Testimonials
                 </a>
               </div>
             </div>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+            <button
+              className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90"
+              onClick={() => redirect("/sign-in")}
+            >
               Sign Up Free
             </button>
           </div>
@@ -65,19 +71,19 @@ export default function Header() {
       <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="lg:grid lg:grid-cols-2 lg:gap-8 items-center">
           <div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
-              <span className="block text-blue-600">Master Math & Science</span>
+            <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+              <span className="block text-primary">Master Math & Science</span>
               <span className="block">Grades 7-9 Made Easy</span>
             </h1>
-            <p className="mt-3 text-xl text-gray-500">
+            <p className="mt-3 text-xl text-muted-foreground">
               Interactive lessons that connect mathematical concepts with
               real-world science applications.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
-              <button className="px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10">
+              <button className="px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 md:py-4 md:text-lg md:px-10">
                 Start Learning Now
               </button>
-              <button className="flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 md:py-4 md:text-lg md:px-10">
+              <button className="flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-primary/10 hover:bg-primary/20 md:py-4 md:text-lg md:px-10">
                 <FiPlay className="mr-2" /> Watch Demo
               </button>
             </div>
@@ -93,46 +99,49 @@ export default function Header() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-12 bg-white px-4 sm:px-6 lg:px-8">
+      <section
+        id="features"
+        className="py-12 bg-secondary px-4 sm:px-6 lg:px-8"
+      >
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-extrabold text-gray-900 text-center">
+          <h2 className="text-3xl font-extrabold text-foreground text-center">
             Why Students Love MathSciLearn
           </h2>
           <div className="mt-10 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
-                icon: <FiPlay className="h-8 w-8 text-blue-600" />,
+                icon: <FiPlay className="h-8 w-8 text-primary" />,
                 title: "Engaging Videos",
                 description:
                   "Animated explanations that make complex topics simple",
               },
               {
-                icon: <FiBookOpen className="h-8 w-8 text-blue-600" />,
+                icon: <FiBookOpen className="h-8 w-8 text-primary" />,
                 title: "Integrated Learning",
                 description: "Math concepts applied to real science problems",
               },
               {
-                icon: <FiAward className="h-8 w-8 text-blue-600" />,
+                icon: <FiAward className="h-8 w-8 text-primary" />,
                 title: "Progress Tracking",
                 description:
                   "Badges and certificates to celebrate achievements",
               },
               {
-                icon: <FiBarChart2 className="h-8 w-8 text-blue-600" />,
+                icon: <FiBarChart2 className="h-8 w-8 text-primary" />,
                 title: "Adaptive Practice",
                 description: "Questions that adjust to your skill level",
               },
             ].map((feature, index) => (
               <div key={index} className="text-center">
                 <div className="flex justify-center">
-                  <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-50">
+                  <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary/10">
                     {feature.icon}
                   </div>
                 </div>
-                <h3 className="mt-4 text-lg font-medium text-gray-900">
+                <h3 className="mt-4 text-lg font-medium text-foreground">
                   {feature.title}
                 </h3>
-                <p className="mt-2 text-base text-gray-500">
+                <p className="mt-2 text-base text-muted-foreground">
                   {feature.description}
                 </p>
               </div>
@@ -142,9 +151,9 @@ export default function Header() {
       </section>
 
       {/* Courses Section */}
-      <section id="courses" className="py-12 bg-gray-50 px-4 sm:px-6 lg:px-8">
+      <section id="courses" className="py-12 bg-muted px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-extrabold text-gray-900 text-center">
+          <h2 className="text-3xl font-extrabold text-foreground text-center">
             Explore Our Courses
           </h2>
 
@@ -152,13 +161,21 @@ export default function Header() {
             <div className="inline-flex rounded-md shadow-sm">
               <button
                 onClick={() => setActiveTab("math")}
-                className={`px-4 py-2 text-sm font-medium rounded-l-lg ${activeTab === "math" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+                className={`px-4 py-2 text-sm font-medium rounded-l-lg ${
+                  activeTab === "math"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background text-foreground hover:bg-muted"
+                }`}
               >
                 Mathematics
               </button>
               <button
                 onClick={() => setActiveTab("science")}
-                className={`px-4 py-2 text-sm font-medium rounded-r-lg ${activeTab === "science" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+                className={`px-4 py-2 text-sm font-medium rounded-r-lg ${
+                  activeTab === "science"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background text-foreground hover:bg-muted"
+                }`}
               >
                 Integrated Science
               </button>
@@ -189,21 +206,20 @@ export default function Header() {
                     color: "bg-yellow-100 text-yellow-800",
                   },
                 ].map((course, index) => (
-                  <div
-                    key={index}
-                    className="bg-white overflow-hidden shadow rounded-lg"
-                  >
-                    <div className={`px-4 py-3 ${course.color}`}>
+                  <Card key={index}>
+                    <CardHeader className={`${course.color} rounded-t-lg`}>
                       <h3 className="text-lg font-medium">{course.title}</h3>
                       <p className="text-sm">{course.grade}</p>
-                    </div>
-                    <div className="px-4 py-5 sm:p-6">
-                      <p className="text-gray-600">{course.description}</p>
-                      <button className="mt-4 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      <p className="text-muted-foreground">
+                        {course.description}
+                      </p>
+                      <Button variant="outline" className="mt-4">
                         Explore Course
-                      </button>
-                    </div>
-                  </div>
+                      </Button>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             ) : (
@@ -231,21 +247,20 @@ export default function Header() {
                     color: "bg-teal-100 text-teal-800",
                   },
                 ].map((course, index) => (
-                  <div
-                    key={index}
-                    className="bg-white overflow-hidden shadow rounded-lg"
-                  >
-                    <div className={`px-4 py-3 ${course.color}`}>
+                  <Card key={index}>
+                    <CardHeader className={`${course.color} rounded-t-lg`}>
                       <h3 className="text-lg font-medium">{course.title}</h3>
                       <p className="text-sm">{course.grade}</p>
-                    </div>
-                    <div className="px-4 py-5 sm:p-6">
-                      <p className="text-gray-600">{course.description}</p>
-                      <button className="mt-4 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      <p className="text-muted-foreground">
+                        {course.description}
+                      </p>
+                      <Button variant="outline" className="mt-4">
                         Explore Course
-                      </button>
-                    </div>
-                  </div>
+                      </Button>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
@@ -256,10 +271,10 @@ export default function Header() {
       {/* Testimonials */}
       <section
         id="testimonials"
-        className="py-12 px-4 sm:px-6 lg:px-8 bg-white"
+        className="py-12 px-4 sm:px-6 lg:px-8 bg-secondary"
       >
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-extrabold text-gray-900 text-center">
+          <h2 className="text-3xl font-extrabold text-foreground text-center">
             What Students Say
           </h2>
           <div className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -289,138 +304,142 @@ export default function Header() {
                 grade: "Grade 8",
               },
             ].map((testimonial, index) => (
-              <div key={index} className="bg-gray-50 p-6 rounded-lg">
-                <p className="text-gray-600 italic">"{testimonial.quote}"</p>
-                <div className="mt-4">
-                  <p className="font-medium text-gray-900">
-                    {testimonial.name}
+              <Card key={index}>
+                <CardContent className="pt-6">
+                  <p className="text-muted-foreground italic">
+                    "{testimonial.quote}"
                   </p>
-                  <p className="text-gray-500">{testimonial.grade}</p>
-                </div>
-              </div>
+                  <div className="mt-4">
+                    <p className="font-medium text-foreground">
+                      {testimonial.name}
+                    </p>
+                    <p className="text-muted-foreground">{testimonial.grade}</p>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-12 bg-blue-600">
+      <section className="py-12 bg-primary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
+          <h2 className="text-3xl font-extrabold text-primary-foreground sm:text-4xl">
             Ready to transform your learning?
           </h2>
-          <p className="mt-3 max-w-2xl mx-auto text-xl text-blue-100">
+          <p className="mt-3 max-w-2xl mx-auto text-xl text-primary-foreground/90">
             Join thousands of students mastering math and science together.
           </p>
           <div className="mt-8 flex justify-center">
-            <button className="px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 md:py-4 md:text-lg md:px-10">
+            <Button variant="secondary" className="text-primary">
               Get Started Free
-            </button>
+            </Button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-800">
+      <footer className="bg-secondary">
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
+              <h3 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">
                 About
               </h3>
               <div className="mt-4 space-y-4">
                 <a
                   href="#"
-                  className="text-base text-gray-300 hover:text-white"
+                  className="text-base text-foreground hover:text-primary"
                 >
                   Our Mission
                 </a>
                 <a
                   href="#"
-                  className="text-base text-gray-300 hover:text-white"
+                  className="text-base text-foreground hover:text-primary"
                 >
                   Team
                 </a>
                 <a
                   href="#"
-                  className="text-base text-gray-300 hover:text-white"
+                  className="text-base text-foreground hover:text-primary"
                 >
                   Careers
                 </a>
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
+              <h3 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">
                 Support
               </h3>
               <div className="mt-4 space-y-4">
                 <a
                   href="#"
-                  className="text-base text-gray-300 hover:text-white"
+                  className="text-base text-foreground hover:text-primary"
                 >
                   Help Center
                 </a>
                 <a
                   href="#"
-                  className="text-base text-gray-300 hover:text-white"
+                  className="text-base text-foreground hover:text-primary"
                 >
                   Contact Us
                 </a>
                 <a
                   href="#"
-                  className="text-base text-gray-300 hover:text-white"
+                  className="text-base text-foreground hover:text-primary"
                 >
                   FAQ
                 </a>
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
+              <h3 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">
                 Legal
               </h3>
               <div className="mt-4 space-y-4">
                 <a
                   href="#"
-                  className="text-base text-gray-300 hover:text-white"
+                  className="text-base text-foreground hover:text-primary"
                 >
                   Privacy
                 </a>
                 <a
                   href="#"
-                  className="text-base text-gray-300 hover:text-white"
+                  className="text-base text-foreground hover:text-primary"
                 >
                   Terms
                 </a>
                 <a
                   href="#"
-                  className="text-base text-gray-300 hover:text-white"
+                  className="text-base text-foreground hover:text-primary"
                 >
                   Cookie Policy
                 </a>
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
+              <h3 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">
                 Connect
               </h3>
               <div className="mt-4 space-y-4">
                 <a
                   href="#"
-                  className="flex items-center text-base text-gray-300 hover:text-white"
+                  className="flex items-center text-base text-foreground hover:text-primary"
                 >
                   <FiMail className="mr-2" /> Email
                 </a>
                 <a
                   href="#"
-                  className="flex items-center text-base text-gray-300 hover:text-white"
+                  className="flex items-center text-base text-foreground hover:text-primary"
                 >
                   <FiPhone className="mr-2" /> (555) 123-4567
                 </a>
               </div>
             </div>
           </div>
-          <div className="mt-8 border-t border-gray-700 pt-8 flex justify-between">
-            <p className="text-base text-gray-400">
+          <div className="mt-8 border-t border-muted pt-8 flex justify-between">
+            <p className="text-base text-muted-foreground">
               &copy; 2024 MathSciLearn. All rights reserved.
             </p>
             <div className="flex space-x-6">

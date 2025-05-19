@@ -12,14 +12,23 @@ export default async function AuthButton() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("full_name, phone_number, email, avatar_url")
+    .eq("email", user?.email)
+    .single();
+  if (userError) {
+    console.error("Error fetching user details:", userError);
+  }
+
   if (!hasEnvVars) {
     return (
       <>
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
           <div>
             <Badge
               variant={"default"}
-              className="font-normal pointer-events-none"
+              className="font-normal pointer-events-none text-center text-xs sm:text-sm"
             >
               Please update .env.local file with anon key and url
             </Badge>
@@ -49,7 +58,7 @@ export default async function AuthButton() {
     );
   }
   return user ? (
-    <div className="flex w-full gap-4 justify-end items-center">
+    <div className="flex w-full flex-col sm:flex-row gap-4 justify-end items-center">
       <div className="flex items-center gap-2">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -66,17 +75,29 @@ export default async function AuthButton() {
           <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
-        <span>{user.email}</span>
+        <div className="flex w-8 h-8 items-center justify-center rounded-full">
+          {userData?.avatar_url ? (
+            <img
+              src={userData?.avatar_url}
+              alt={userData?.full_name || ""}
+              className="rounded-full w-8 h-8"
+            />
+          ) : (
+            <div className="text-xl font-bold text-white">
+              {userData?.full_name}
+            </div>
+          )}
+        </div>
       </div>
       <form action={signOutAction}>
-        <Button type="submit" variant={"outline"}>
+        <Button type="submit" variant={"outline"} size="sm">
           Sign out
         </Button>
       </form>
     </div>
   ) : (
     <div className="flex gap-2">
-      <Button asChild size="sm" variant={"outline"}>
+      <Button asChild size="sm" variant={"default"}>
         <Link href="/sign-in">Sign in</Link>
       </Button>
       <Button asChild size="sm" variant={"default"}>
