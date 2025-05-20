@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { createClient } from "@/utils/supabase/server";
+import { Moon, Sun, User } from "lucide-react";
+import { ThemeSwitcher } from "./theme-switcher";
 
 export default async function AuthButton() {
   const supabase = await createClient();
@@ -12,11 +14,18 @@ export default async function AuthButton() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: userData, error: userError } = await supabase
+  let userData = null;
+  let userError = null;
+
+  const { data, error } = await supabase
     .from("users")
-    .select("full_name, phone_number, email, avatar_url")
+    .select("full_name, avatar_url")
     .eq("email", user?.email)
     .single();
+
+  userData = data;
+  userError = error;
+
   if (userError) {
     console.error("Error fetching user details:", userError);
   }
@@ -59,26 +68,13 @@ export default async function AuthButton() {
   }
   return user ? (
     <div className="flex w-full flex-col sm:flex-row gap-4 justify-end items-center">
+      <ThemeSwitcher />
       <div className="flex items-center gap-2">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-5 w-5"
-        >
-          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
-        </svg>
+        <User className="h-5 w-5" />
         <div className="flex w-8 h-8 items-center justify-center rounded-full">
           {userData?.avatar_url ? (
             <img
-              src={userData?.avatar_url}
+              src={userData?.avatar_url || "/placeholder.svg"}
               alt={userData?.full_name || ""}
               className="rounded-full w-8 h-8"
             />
@@ -96,7 +92,8 @@ export default async function AuthButton() {
       </form>
     </div>
   ) : (
-    <div className="flex gap-2">
+    <div className="flex gap-2 items-center">
+      <ThemeSwitcher />
       <Button asChild size="sm" variant={"default"}>
         <Link href="/sign-in">Sign in</Link>
       </Button>

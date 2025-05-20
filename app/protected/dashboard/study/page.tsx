@@ -1,7 +1,5 @@
 // app/study/page.tsx
-// app/study/page.tsx
 "use client";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,11 +37,14 @@ import {
 } from "@/components/ui/dialog";
 import MaleReproductiveSystemQuiz from "@/components/quizMale";
 import { Label } from "@/components/ui/label";
+
 type CurriculumUnit = {
-  [key: string]: string[];
+  [key: string]: {
+    [subStrand: string]: string[];
+  };
 };
 
-type CurriculumSubject = string[] | CurriculumUnit;
+type CurriculumSubject = string[] | CurriculumUnit | "coming-soon";
 
 type CurriculumGrade = {
   [subject: string]: CurriculumSubject;
@@ -56,64 +57,60 @@ type Curriculum = {
 const curriculum: Curriculum = {
   "7": {
     "Integrated Science": {
-      "1.0. Living things and the Environment": [
-        "Human Reproductive System",
-        "The Male Reproductive System",
-        "The Female Reproductive System",
-        "Human Excretory System",
-        "Parts of the Human Skin and their Functions",
-        "Parts of the Urinary System and their Functions",
-      ],
-      "2.0. Human Body Systems": ["The Circulatory System"],
-      "3.0. Force and Energy": ["Electrical Energy", "Magnetism"],
+      "Living things and the Environment": {
+        "Human Reproductive System": [
+          "The Male Reproductive System",
+          "The Female Reproductive System",
+        ],
+        "Human Excretory System": [
+          "Parts of the Human Skin and their Functions",
+          "The Urinary System",
+          "Parts of the Kidney and their Functions",
+        ],
+      },
+      "Human Body Systems": {
+        "Digestive System": ["Parts of the Digestive System"],
+        "Circulatory System": ["Components of Blood"],
+      },
+      "Force and Energy": {
+        "Electrical Energy": ["Simple Electrical Circuits"],
+        Magnetism: ["Properties of a Magnet"],
+      },
     },
-    Mathematics: ["Algebra Basics", "Number Theory", "Geometry Fundamentals"],
-    "Pre-Technical Studies": [
-      "Basic Technical Drawing",
-      "Materials Technology",
-      "Tools and Equipment",
-    ],
+    Mathematics: "coming-soon",
+    "Pre-Technical Studies": "coming-soon",
   },
   "8": {
     "Integrated Science": {
-      "1.0. Living Things and their Environment": [
-        "The Cell",
-        "Movement of Materials In and Out of the Cell",
-      ],
-      "2.0. Human Body Systems": ["Respiratory system"],
+      "Living Things and their Environment": {
+        Cells: ["The Cell", "Movement of Materials In and Out of the Cell"],
+      },
+      "Human Body Systems": {
+        "Respiratory System": ["Structure of the Respiratory System"],
+      },
     },
-    Mathematics: [
-      "Algebraic Expressions",
-      "Linear Equations",
-      "Geometric Constructions",
-    ],
-    "Pre-Technical Studies": [
-      "Engineering Principles",
-      "Energy and Power",
-      "Manufacturing Processes",
-    ],
+    Mathematics: "coming-soon",
+    "Pre-Technical Studies": "coming-soon",
   },
   "9": {
     "Integrated Science": {
-      "1.0. Human Body Systems": ["The Digestive System"],
-      "2.0. Mixtures, Elements and Compounds": [
-        "Structure of the atom",
-        "Metals and Alloys",
-      ],
+      "Human Body Systems": {
+        "Digestive System": ["The Digestive System"],
+      },
+      "Mixtures, Elements and Compounds": {
+        "Atomic Structure": ["Structure of the atom", "Metals and Alloys"],
+      },
     },
-    Mathematics: ["Quadratic Equations", "Trigonometry", "Coordinate Geometry"],
-    "Pre-Technical Studies": [
-      "Advanced Technical Drawing",
-      "Electronics Fundamentals",
-      "Control Systems",
-    ],
+    Mathematics: "coming-soon",
+    "Pre-Technical Studies": "coming-soon",
   },
 };
 
 export default function StudyPage() {
   const [grade, setGrade] = useState("");
   const [subject, setSubject] = useState("");
-  const [unit, setUnit] = useState("");
+  const [strand, setStrand] = useState("");
+  const [subStrand, setSubStrand] = useState("");
   const [topic, setTopic] = useState("");
   const [activeMode, setActiveMode] = useState("video");
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -129,35 +126,43 @@ export default function StudyPage() {
     ? Object.keys(curriculum[grade as keyof typeof curriculum])
     : [];
 
-  const units =
-    grade && subject
-      ? isCurriculumUnit(curriculum[grade][subject])
-        ? Object.keys(curriculum[grade][subject])
-        : ["All Topics"]
+  const strands =
+    grade && subject && isCurriculumUnit(curriculum[grade][subject])
+      ? Object.keys(curriculum[grade][subject] as CurriculumUnit)
+      : [];
+
+  const subStrands =
+    grade && subject && strand && isCurriculumUnit(curriculum[grade][subject])
+      ? Object.keys((curriculum[grade][subject] as CurriculumUnit)[strand])
+      : [];
+
+  const topics =
+    grade &&
+    subject &&
+    strand &&
+    subStrand &&
+    isCurriculumUnit(curriculum[grade][subject])
+      ? (curriculum[grade][subject] as CurriculumUnit)[strand][subStrand]
       : [];
 
   // Helper type guard function
   function isCurriculumUnit(
     subject: CurriculumSubject,
   ): subject is CurriculumUnit {
-    return typeof subject === "object" && !Array.isArray(subject);
+    return (
+      typeof subject === "object" &&
+      !Array.isArray(subject) &&
+      subject !== ("coming-soon" as any)
+    );
   }
-
-  // When accessing nested properties, use type assertions
-  const topics =
-    grade && subject && unit
-      ? isCurriculumUnit(curriculum[grade][subject])
-        ? curriculum[grade][subject][unit]
-        : curriculum[grade][subject]
-      : [];
 
   return (
     <div className="flex h-[90vh] bg-muted w-full px-4">
       {/* Main Content */}
-      <div className="flex-1  overflow-y-auto w-full">
-        <div className=" mx-auto">
-          {/* Grade/Subject/Unit/Topic Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="flex-1 overflow-y-auto w-full">
+        <div className="mx-auto">
+          {/* Grade/Subject/Strand/SubStrand/Topic Selection */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
             <Select onValueChange={setGrade} value={grade}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Grade" />
@@ -172,7 +177,12 @@ export default function StudyPage() {
             </Select>
 
             <Select
-              onValueChange={setSubject}
+              onValueChange={(value) => {
+                setSubject(value);
+                setStrand("");
+                setSubStrand("");
+                setTopic("");
+              }}
               value={subject}
               disabled={!grade}
             >
@@ -189,27 +199,63 @@ export default function StudyPage() {
               </SelectContent>
             </Select>
 
-            <Select onValueChange={setUnit} value={unit} disabled={!subject}>
+            <Select
+              onValueChange={(value) => {
+                setStrand(value);
+                setSubStrand("");
+                setTopic("");
+              }}
+              value={strand}
+              disabled={
+                !subject || curriculum[grade][subject] === "coming-soon"
+              }
+            >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Unit" />
+                <SelectValue placeholder="Select Strand" />
               </SelectTrigger>
               <SelectContent>
                 {subject &&
-                  units.map((u) => (
-                    <SelectItem key={u} value={u}>
-                      {u.replace(/^\d+\.\d+\.\s*/, "")}
+                  curriculum[grade][subject] !== "coming-soon" &&
+                  strands.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
                     </SelectItem>
                   ))}
               </SelectContent>
             </Select>
 
-            <Select onValueChange={setTopic} value={topic} disabled={!unit}>
+            <Select
+              onValueChange={(value) => {
+                setSubStrand(value);
+                setTopic("");
+              }}
+              value={subStrand}
+              disabled={!strand}
+            >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Topic" />
+                <SelectValue placeholder="Select Sub-Strand" />
               </SelectTrigger>
               <SelectContent>
-                {unit &&
-                  topics.map((t: string) => (
+                {strand &&
+                  subStrands.map((ss) => (
+                    <SelectItem key={ss} value={ss}>
+                      {ss}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              onValueChange={setTopic}
+              value={topic}
+              disabled={!subStrand}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select Lesson" />
+              </SelectTrigger>
+              <SelectContent>
+                {subStrand &&
+                  topics.map((t) => (
                     <SelectItem key={t} value={t}>
                       {t}
                     </SelectItem>
@@ -261,7 +307,7 @@ export default function StudyPage() {
                     <DialogTrigger asChild>
                       <Button variant="outline">Take Quiz</Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px] bg-primary">
+                    <DialogContent className="sm:max-w-fit bg-muted">
                       <MaleReproductiveSystemQuiz />
                       <DialogFooter>
                         <Button type="submit">Submit</Button>
@@ -297,44 +343,63 @@ export default function StudyPage() {
                 {subject} Curriculum - Grade {grade}
               </h2>
 
-              <Accordion type="multiple" className="w-full">
-                {units.map((unitTitle) => (
-                  <AccordionItem key={unitTitle} value={unitTitle}>
-                    <AccordionTrigger className="text-lg font-medium hover:no-underline">
-                      <div className="flex items-center">
-                        <BookOpen className="w-5 h-5 mr-3 text-primary" />
-                        {unitTitle}
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2 ml-8">
-                        {grade &&
-                          subject &&
-                          unitTitle &&
-                          isCurriculumUnit(
-                            curriculum[grade as keyof typeof curriculum][
-                              subject as keyof (typeof curriculum)[typeof grade]
-                            ],
-                          ) &&
-                          (
-                            curriculum[grade as keyof typeof curriculum][
-                              subject as keyof (typeof curriculum)[typeof grade]
-                            ] as CurriculumUnit
-                          )[unitTitle]?.map((topicItem: string) => (
-                            <Button
-                              key={topicItem}
-                              variant="outline"
-                              className="justify-start text-left h-auto py-3"
-                              onClick={() => setTopic(topicItem)}
-                            >
-                              {topicItem}
-                            </Button>
-                          ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+              {curriculum[grade][subject] === "coming-soon" ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-center text-muted-foreground">
+                    <p className="text-lg">Coming Soon</p>
+                    <p>We're working on content for {subject}</p>
+                  </div>
+                </div>
+              ) : (
+                <Accordion type="multiple" className="w-full">
+                  {strands.map((strandItem) => (
+                    <AccordionItem key={strandItem} value={strandItem}>
+                      <AccordionTrigger className="text-lg font-medium hover:no-underline">
+                        <div className="flex items-center">
+                          <BookOpen className="w-5 h-5 mr-3 text-primary" />
+                          {strandItem}
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="space-y-4 ml-8">
+                          {isCurriculumUnit(curriculum[grade][subject]) &&
+                            Object.keys(
+                              (curriculum[grade][subject] as CurriculumUnit)[
+                                strandItem
+                              ],
+                            ).map((subStrandItem) => (
+                              <div key={subStrandItem} className="mt-4">
+                                <h3 className="font-semibold text-foreground mb-2">
+                                  {subStrandItem}
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                  {(
+                                    curriculum[grade][subject] as CurriculumUnit
+                                  )[strandItem][subStrandItem].map(
+                                    (topicItem) => (
+                                      <Button
+                                        key={topicItem}
+                                        variant="outline"
+                                        className="justify-start text-left h-auto py-3"
+                                        onClick={() => {
+                                          setStrand(strandItem);
+                                          setSubStrand(subStrandItem);
+                                          setTopic(topicItem);
+                                        }}
+                                      >
+                                        {topicItem}
+                                      </Button>
+                                    ),
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-center h-64 bg-card rounded-lg shadow border border-border">
@@ -347,7 +412,7 @@ export default function StudyPage() {
         </div>
       </div>
 
-      {/* Chat Panel and Floating Button (same as before) */}
+      {/* Chat Panel and Floating Button */}
       <div
         className={`h-full bg-sidebar shadow-lg transition-all duration-300 ${
           isChatOpen ? "w-80" : "w-0"
@@ -369,7 +434,6 @@ export default function StudyPage() {
               </Button>
             </div>
             <div className="flex-1 p-4 overflow-y-auto">
-              {/* Chat messages would go here */}
               <div className="space-y-4">
                 <div className="text-sm text-muted-foreground text-center">
                   Today, 2:30 PM
@@ -407,8 +471,4 @@ export default function StudyPage() {
       </Button>
     </div>
   );
-}
-
-{
-  /* Chat Panel */
 }

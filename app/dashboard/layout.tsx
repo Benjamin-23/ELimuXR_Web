@@ -11,11 +11,11 @@ export default async function Layout({
   return (
     <div className=" w-screen">
       <div className="flex flex-col gap-8">
-        {/* <nav className="w-full flex justify-end border-b border-b-foreground/10 h-16">
+        <nav className="w-full flex justify-end border-b border-b-foreground/10 h-16">
           <div className="flex  p-3 px-5 text-sm justify-end">
-            {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />}
+            {<HeaderAuth />}
           </div>
-        </nav> */}
+        </nav>
         <div className="flex  mt-4 ">
           <div className="w-fit">
             <Sidebar />

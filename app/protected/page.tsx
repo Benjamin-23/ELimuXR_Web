@@ -15,9 +15,5 @@ export default async function ProtectedPage() {
   if (!user) {
     return redirect("/sign-in");
   }
-  return (
-    <div>
-      <Header />
-    </div>
-  );
+  return redirect("/protected/dashboard");
 }

@@ -81,7 +81,7 @@ export default function MaleReproductiveSystemQuiz() {
 
   if (quizCompleted) {
     return (
-      <ScrollArea className="h-fit w-full rounded-md border bg-blue-300">
+      <ScrollArea className="h-fit w-full rounded-md border bg-muted">
         <div className=" mx-auto mt-8 h-fit overflow-y-auto">
           <div>
             <CardTitle className="text-center">Quiz Completed!</CardTitle>
@@ -107,7 +107,7 @@ export default function MaleReproductiveSystemQuiz() {
   }
 
   return (
-    <ScrollArea className="w-full bg-secondary-foreground h-[60vh]">
+    <ScrollArea className="w-full bg-muted h-[85vh]">
       <div className="w-full mx-auto p-4">
         <div className="mb-6">
           <div>

@@ -65,7 +65,7 @@ const Sidebar = () => {
     {
       name: "Online Class",
       icon: <FiVideo />,
-      url: "/dashboard/online-class",
+      url: "/protected/dashboard/online-class",
     },
     {
       name: "Instructors",

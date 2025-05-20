@@ -1,5 +1,4 @@
-// "use client";
-import { createClient } from "@/utils/supabase/server";
+// app/page.tsx
 import {
   Card,
   CardHeader,
@@ -8,168 +7,120 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Star, BookOpen, Clock, Award, ChevronRight } from "lucide-react";
+import { Star, BookOpen, Award, ChevronRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { redirect } from "next/navigation";
+import Link from "next/link";
 
-export default async function ProtectedPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // const { data: userData, error: userError } = await supabase
-  //   .from("users")
-  //   .select("full_name, phone_number, email")
-  //   .eq("email", user?.email)
-  //   .single();
-  // if (userError) {
-  //   console.error("Error fetching user details:", userError);
-  // }
-  const enrolledCourses = [
+export default function HomePage() {
+  const featuredCourses = [
     {
       id: 1,
-      title: "Grade 7 Mathematics",
-      instructor: "Dr. Sarah Johnson",
-      progress: 68,
-      lastAccessed: "Algebra Basics",
+      title: "Mathematics Fundamentals",
+      description: "Master basic concepts for Grades 7-9",
+      rating: 4.8,
+      students: 1245,
       image: "/math-course.jpg",
-      totalLessons: 24,
-      completedLessons: 16,
     },
     {
       id: 2,
-      title: "Grade 8 Integrated Science",
-      instructor: "Prof. Michael Chen",
-      progress: 42,
-      lastAccessed: "Cell Biology",
-      image: "/science-course.jpg",
-      totalLessons: 30,
-      completedLessons: 13,
-    },
-    {
-      id: 3,
-      title: "Grade 9 Pre-Technical Studies",
-      instructor: "Eng. David Wilson",
-      progress: 15,
-      lastAccessed: "Technical Drawing",
-      image: "/tech-course.jpg",
-      totalLessons: 18,
-      completedLessons: 3,
-    },
-  ];
-
-  const recommendedCourses = [
-    {
-      id: 4,
-      title: "Mathematics Challenge",
-      description: "Advanced problems for grade 7 students",
-      rating: 4.8,
-      students: 1245,
-      image: "/math-advanced.jpg",
-    },
-    {
-      id: 5,
       title: "Science Explorers",
       description: "Hands-on experiments and activities",
       rating: 4.6,
       students: 892,
       image: "/science-lab.jpg",
     },
+    {
+      id: 3,
+      title: "Technical Studies Intro",
+      description: "Learn essential technical skills",
+      rating: 4.7,
+      students: 756,
+      image: "/tech-course.jpg",
+    },
   ];
 
-  const achievements = [
+  const popularSubjects = [
     {
-      name: "Fast Learner",
-      icon: <Clock className="h-5 w-5" />,
-      date: "Earned 2 days ago",
-    },
-    {
-      name: "Perfect Score",
-      icon: <Award className="h-5 w-5" />,
-      date: "Earned 1 week ago",
-    },
-    {
-      name: "Course Complete",
+      name: "Algebra",
       icon: <BookOpen className="h-5 w-5" />,
-      date: "Earned 2 weeks ago",
+      courses: 12,
+    },
+    {
+      name: "Biology",
+      icon: <BookOpen className="h-5 w-5" />,
+      courses: 8,
+    },
+    {
+      name: "Geometry",
+      icon: <BookOpen className="h-5 w-5" />,
+      courses: 10,
     },
   ];
+
   return (
-    <ScrollArea className="h-[90vh] w-fit">
+    <ScrollArea className="h-[90vh] w-full">
       <div className="container mx-auto px-4 py-8">
-        {/* Welcome Banner */}
-        <section className="mb-8">
-          <Card className="border-none shadow-none bg-gradient-to-r from-primary/10 to-blue-100">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                <div>
-                  <h1 className="text-xl sm:text-2xl font-bold mb-2 break-words">
-                    Welcome back, {"Guest"}!
-                  </h1>
-                  <p className="text-sm sm:text-base text-muted-foreground">
-                    Continue your learning journey where you left off
-                  </p>
-                </div>
-                <Button className="mt-4 sm:mt-0 text-sm sm:text-base w-full sm:w-auto">
-                  Continue Learning <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Hero Section */}
+        <section className="mb-10">
+          <div className="bg-gradient-to-r from-primary/10 to-blue-100 rounded-xl p-6 sm:p-8 text-center ">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-4">
+              Welcome to <span className="text-primary">ElimuXR</span>
+            </h1>
+            <p className="text-background mb-6 max-w-2xl mx-auto">
+              Learning STEM the Smart Way
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild className="w-full sm:w-auto">
+                <Link href="/signup">Get Started</Link>
+              </Button>
+              <Button variant="outline" asChild className="w-full sm:w-auto">
+                <Link href="/courses">Browse Courses</Link>
+              </Button>
+            </div>
+          </div>
         </section>
 
-        {/* Current Progress */}
+        {/* Featured Courses */}
         <section className="mb-10">
-          <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center">
-            <BookOpen className="h-5 w-5 mr-2 text-primary" />
-            Your Courses
-          </h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold">Featured Courses</h2>
+            <Button variant="ghost" asChild className="text-primary">
+              <Link href="/courses">
+                View All <ChevronRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {enrolledCourses.map((course) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredCourses.map((course) => (
               <Card
                 key={course.id}
                 className="hover:shadow-md transition-shadow"
               >
-                <CardHeader className="pb-2 sm:pb-3">
-                  <div className="h-32 sm:h-40 bg-gray-100 rounded-lg mb-3 overflow-hidden">
+                <CardHeader className="pb-0">
+                  <div className="h-40 bg-gray-100 rounded-t-lg overflow-hidden">
                     <img
                       src={course.image}
                       alt={course.title}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <CardTitle className="text-base sm:text-lg line-clamp-1">
-                    {course.title}
-                  </CardTitle>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    By {course.instructor}
-                  </p>
                 </CardHeader>
-                <CardContent>
-                  <div className="mb-3">
-                    <div className="flex justify-between text-xs sm:text-sm mb-1">
-                      <span>Progress: {course.progress}%</span>
-                      <span>
-                        {course.completedLessons}/{course.totalLessons} lessons
-                      </span>
-                    </div>
-                    <Progress value={course.progress} className="h-2" />
-                  </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground flex items-center">
-                    <Clock className="h-3 w-3 mr-1" />
-                    <span className="truncate">
-                      Last: {course.lastAccessed}
-                    </span>
+                <CardContent className="pt-4">
+                  <CardTitle className="text-lg">{course.title}</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {course.description}
                   </p>
+                  <div className="flex items-center mt-3 text-sm">
+                    <Star className="h-4 w-4 mr-1 text-yellow-500 fill-yellow-500" />
+                    <span>{course.rating}</span>
+                    <span className="mx-2">•</span>
+                    <span>{course.students} students</span>
+                  </div>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full text-sm">
-                    Continue
+                  <Button asChild className="w-full">
+                    <Link href="/signup">Enroll Now</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -177,91 +128,81 @@ export default async function ProtectedPage() {
           </div>
         </section>
 
-        {/* Recommended Courses */}
+        {/* Popular Subjects */}
         <section className="mb-10">
-          <div className="flex justify-between items-center mb-4 sm:mb-6">
-            <h2 className="text-lg sm:text-xl font-bold flex items-center">
-              <Star className="h-5 w-5 mr-2 text-yellow-500" />
-              Recommended For You
-            </h2>
-            <Button variant="ghost" className="text-primary text-sm p-1 sm:p-2">
-              See All <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:gap-6">
-            {recommendedCourses.map((course) => (
-              <Card
-                key={course.id}
-                className="hover:shadow-md transition-shadow"
-              >
-                <div className="flex flex-col sm:flex-row">
-                  <div className="w-full sm:w-1/3 h-40 bg-gray-100 overflow-hidden">
-                    <img
-                      src={course.image}
-                      alt={course.title}
-                      className="w-full h-full object-cover"
-                    />
+          <h2 className="text-xl font-bold mb-6">Popular Subjects</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {popularSubjects.map((subject, index) => (
+              <Card key={index} className="hover:shadow-md transition-shadow">
+                <CardHeader className="flex flex-row items-center space-x-4">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    {subject.icon}
                   </div>
-                  <div className="w-full sm:w-2/3">
-                    <CardHeader className="py-2 px-4">
-                      <CardTitle className="text-base sm:text-lg">
-                        {course.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="py-2 px-4">
-                      <p className="text-xs sm:text-sm mb-3">
-                        {course.description}
-                      </p>
-                      <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-                        <Star className="h-4 w-4 mr-1 text-yellow-500 fill-yellow-500" />
-                        {course.rating} ({course.students} students)
-                      </div>
-                    </CardContent>
-                    <CardFooter className="py-2 px-4 flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        className="text-xs sm:text-sm flex-1 sm:flex-none sm:mr-3"
-                      >
-                        Preview
-                      </Button>
-                      <Button className="text-xs sm:text-sm flex-1 sm:flex-none">
-                        Enroll Now
-                      </Button>
-                    </CardFooter>
+                  <div>
+                    <CardTitle className="text-lg">{subject.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {subject.courses} courses available
+                    </p>
                   </div>
-                </div>
+                </CardHeader>
+                <CardFooter>
+                  <Button variant="outline" asChild className="w-full">
+                    <Link
+                      href={`/protected/dashboard/courses?subject=${subject.name.toLowerCase()}`}
+                    >
+                      Explore
+                    </Link>
+                  </Button>
+                </CardFooter>
               </Card>
             ))}
           </div>
         </section>
 
-        {/* Achievements */}
-        <section>
-          <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center">
-            <Award className="h-5 w-5 mr-2 text-primary" />
-            Your Achievements
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            {achievements.map((achievement, index) => (
-              <Card key={index} className="hover:shadow-md transition-shadow">
-                <CardHeader className="flex flex-row items-center space-x-3 sm:space-x-4 space-y-0 p-3 sm:p-4 pb-2 sm:pb-3">
-                  <div className="bg-primary/10 p-2 rounded-full flex-shrink-0">
-                    {achievement.icon}
-                  </div>
-                  <div className="min-w-0">
-                    <CardTitle className="text-sm sm:text-base truncate">
-                      {achievement.name}
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {achievement.date}
-                    </p>
-                  </div>
-                </CardHeader>
-              </Card>
+        {/* How It Works */}
+        <section className="mb-10 bg-secondary/50 p-6 rounded-lg">
+          <h2 className="text-xl font-bold mb-6 text-center">How It Works</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {[
+              {
+                title: "Sign Up",
+                description: "Create your free account in minutes",
+                icon: <BookOpen className="h-6 w-6" />,
+              },
+              {
+                title: "Choose Courses",
+                description: "Select from our curriculum-aligned courses",
+                icon: <BookOpen className="h-6 w-6" />,
+              },
+              {
+                title: "Start Learning",
+                description: "Access interactive lessons anytime",
+                icon: <BookOpen className="h-6 w-6" />,
+              },
+            ].map((step, index) => (
+              <div key={index} className="text-center">
+                <div className="bg-primary/10 h-12 w-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                  {step.icon}
+                </div>
+                <h3 className="font-semibold mb-2">{step.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {step.description}
+                </p>
+              </div>
             ))}
           </div>
+        </section>
+
+        {/* Call to Action */}
+        <section className="text-center">
+          <h2 className="text-xl font-bold mb-4">Ready to Get Started?</h2>
+          <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+            Join thousands of students who are already improving their math and
+            science skills
+          </p>
+          <Button asChild size="lg">
+            <Link href="/signup">Create Free Account</Link>
+          </Button>
         </section>
       </div>
     </ScrollArea>
