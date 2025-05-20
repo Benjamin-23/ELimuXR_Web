@@ -1,4 +1,5 @@
 "use client";
+import { signOutAction } from "@/app/actions";
 import { redirect } from "next/navigation";
 import { url } from "node:inspector/promises";
 // components/Sidebar.js
@@ -53,44 +54,44 @@ const Sidebar = () => {
     {
       name: "Courses",
       icon: <FiLayers />,
-      url: "/protected/dashboard/courses",
+      url: "/dashboard/courses",
     },
-    { name: "Exam", icon: <FiFileText />, url: "/protected/dashboard/exam" },
+    { name: "Exam", icon: <FiFileText />, url: "/dashboard/exam" },
     {
       name: "Wishlist",
       icon: <FiHeart />,
-      url: "/protected/dashboard/wishlist",
+      url: "/dashboard/wishlist",
     },
     {
       name: "Online Class",
       icon: <FiVideo />,
-      url: "/protected/dashboard/online-class",
+      url: "/dashboard/online-class",
     },
     {
       name: "Instructors",
       icon: <FiUsers />,
-      url: "/protected/dashboard/instructors",
+      url: "/dashboard/instructors",
     },
     {
       name: "Chat",
       icon: <FiMessageSquare />,
-      url: "/protected/dashboard/chat",
+      url: "/dashboard/chat",
     },
-    { name: "Profile", icon: <FiUser />, url: "/protected/dashboard/profile" },
+    { name: "Profile", icon: <FiUser />, url: "/dashboard/profile" },
     {
       name: "Notification",
       icon: <FiBell />,
-      url: "/protected/dashboard/notification",
+      url: "/dashboard/notification",
     },
     {
       name: "Settings",
       icon: <FiSettings />,
-      url: "/protected/dashboard/settings",
+      url: "/dashboard/settings",
     },
     {
       name: "Purchase History",
       icon: <FiShoppingBag />,
-      url: "/protected/dashboard/purchase-history",
+      url: "/dashboard/purchase-history",
     },
   ];
 
@@ -124,13 +125,15 @@ const Sidebar = () => {
 
         {/* Mobile menu overlay */}
         <div
-          className={`fixed inset-0 bg-primary z-40 transform transition-transform duration-300 ease-in-out ${
+          className={`fixed inset-0 bg-background z-40 transform transition-transform duration-300 ease-in-out ${
             mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
           <div className="flex flex-col h-full">
             <div className="flex items-center justify-center p-4 border-b">
-              <h2 className="text-xl font-bold text-blue-600">ElimuXR</h2>
+              <a href="/protected" className="text-xl font-bold text-primary">
+                ElimuXR
+              </a>
             </div>
 
             <div className="flex-1 overflow-y-auto">
@@ -142,7 +145,7 @@ const Sidebar = () => {
                         onClick={() => handleNavigation(item)}
                         className={`flex items-center w-full p-4 rounded-lg transition-colors ${
                           activeItem === item.name
-                            ? "bg-blue-50 text-blue-600"
+                            ? "bg-muted text-primary"
                             : "hover:bg-muted"
                         }`}
                       >
@@ -156,11 +159,11 @@ const Sidebar = () => {
 
               <div className="p-4 border-t mt-6">
                 <button
-                  onClick={() => console.log("Logout")}
-                  className="flex items-center w-full p-4 rounded-lg text-gray-700 hover:bg-gray-100"
+                  onClick={() => signOutAction()}
+                  className="flex items-center w-1/2 p-2 rounded-lg bg-primary hover:bg-primary"
                 >
                   <FiLogOut className="text-lg" />
-                  <span className="ml-3 font-medium bg-secondary">Logout</span>
+                  <span className="ml-3 font-medium ">Logout</span>
                 </button>
               </div>
             </div>
@@ -178,9 +181,11 @@ const Sidebar = () => {
       }`}
     >
       {/* Sidebar Header */}
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between px-4  border-b">
         {!collapsed && (
-          <h2 className="text-xl font-bold text-blue-600">ElimuXR</h2>
+          <a href="/protected" className="text-xl font-bold text-primary">
+            ElimuXR
+          </a>
         )}
         <button
           onClick={toggleSidebar}
@@ -200,7 +205,7 @@ const Sidebar = () => {
                   onClick={() => handleNavigation(item)}
                   className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                     activeItem === item.name
-                      ? "bg-blue-50 text-blue-600"
+                      ? "bg-muted-foreground text-primary"
                       : " hover:bg-muted"
                   }`}
                 >

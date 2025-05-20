@@ -8,12 +8,13 @@ import { redirect } from "next/navigation";
 // import { useEffect } from "react";
 
 export default async function Home() {
+  redirect("/dashboard");
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return redirect("/sign-in");
+    return redirect("/dashboard");
   } else {
     return redirect("/protected");
   }
