@@ -132,11 +132,7 @@ export default function OnlineClassesPage() {
                 </CardContent>
                 <CardFooter className="flex space-x-3">
                   <Button asChild className="flex-1">
-                    <Link
-                      href={`/protected/dashboard/online-class/${classItem?.id}`}
-                    >
-                      Join Now
-                    </Link>
+                    <Link href={`/protected/dashboard/meeting`}>Join Now</Link>
                   </Button>
                   <Button variant="outline" size="icon">
                     <Share2 className="h-4 w-4" />
