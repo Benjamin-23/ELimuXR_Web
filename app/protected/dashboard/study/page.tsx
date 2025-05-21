@@ -83,10 +83,14 @@ const curriculum: Curriculum = {
   "8": {
     "Integrated Science": {
       "Living Things and their Environment": {
-        Cells: ["The Cell", "Movement of Materials In and Out of the Cell"],
+        "The Cells": [
+          "The Cell",
+          "Components of a Plant Cell and their Functions",
+          "Components of an Animal Cell and their Functions",
+        ],
       },
       "Human Body Systems": {
-        "Respiratory System": ["Structure of the Respiratory System"],
+        "Respiratory System": ["Respiratory system"],
       },
     },
     Mathematics: "coming-soon",
