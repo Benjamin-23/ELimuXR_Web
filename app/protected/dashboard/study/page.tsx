@@ -69,8 +69,8 @@ const curriculum: Curriculum = {
         ],
       },
       "Human Body Systems": {
-        "Digestive System": ["Parts of the Digestive System"],
-        "Circulatory System": ["Components of Blood"],
+        "Digestive System": ["Digestive System"],
+        "Circulatory System": ["Circulatory System"],
       },
       "Force and Energy": {
         "Electrical Energy": ["Simple Electrical Circuits"],

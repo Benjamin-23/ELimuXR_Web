@@ -31,6 +31,7 @@ io.on("connection", (socket) => {
     if (!rooms.has(roomId)) {
       rooms.set(roomId, {
         participants: [],
+        host: null, // Track the host
       });
     }
 
@@ -43,15 +44,24 @@ io.on("connection", (socket) => {
       joinedAt: Date.now(),
     });
 
+    // If this is the first person to join, make them the host
+    if (room.participants.length === 1 && !room.host) {
+      room.host = userId;
+    }
+
     // Emit room data to the new participant
     socket.emit("room-joined", {
-      roomData: room,
+      roomData: {
+        ...room,
+        host: room.host,
+      },
     });
 
     // Notify other participants about the new user
     socket.to(roomId).emit("user-joined", {
       userId,
       userName,
+      isHostUser: userId === room.host,
     });
 
     // Handle signaling
@@ -110,6 +120,47 @@ io.on("connection", (socket) => {
         userId: socket.id,
       });
     });
+
+    // Handle hand raising
+    socket.on("hand-raised", ({ roomId, userName }) => {
+      socket.to(roomId).emit("hand-raised", {
+        userId: socket.id,
+        userName,
+      });
+    });
+
+    socket.on("hand-lowered", ({ roomId, userName }) => {
+      socket.to(roomId).emit("hand-lowered", {
+        userId: socket.id,
+        userName,
+      });
+    });
+
+    // Handle host changes
+    socket.on("set-host", ({ roomId, hostId }) => {
+      if (room) {
+        room.host = hostId;
+        const hostParticipant = room.participants.find(
+          (p) => p.userId === hostId,
+        );
+        if (hostParticipant) {
+          io.to(roomId).emit("host-changed", {
+            hostId,
+            hostName: hostParticipant.userName,
+          });
+        }
+      }
+    });
+
+    // Handle mute all (host only)
+    socket.on("mute-all", ({ roomId, hostName }) => {
+      if (room && room.host === socket.id) {
+        socket.to(roomId).emit("mute-all", {
+          hostId: socket.id,
+          hostName,
+        });
+      }
+    });
   });
 
   // Leave room
@@ -149,6 +200,17 @@ function handleUserLeaving(socket, roomId) {
       socket.to(roomId).emit("user-left", {
         userId: socket.id,
       });
+
+      // If the host left and there are still participants, assign a new host
+      if (room.host === socket.id && room.participants.length > 0) {
+        room.host = room.participants[0].userId;
+        const newHostParticipant = room.participants[0];
+
+        io.to(roomId).emit("host-changed", {
+          hostId: room.host,
+          hostName: newHostParticipant.userName,
+        });
+      }
 
       // Remove room if empty
       if (room.participants.length === 0) {

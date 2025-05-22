@@ -17,6 +17,8 @@ import {
   MessageSquare,
   Send,
   X,
+  Crown,
+  VolumeX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +44,12 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { io, type Socket } from "socket.io-client";
 import Peer from "simple-peer";
 
@@ -52,6 +60,7 @@ type Participant = {
   name: string;
   audioEnabled: boolean;
   videoEnabled: boolean;
+  isHost?: boolean;
 };
 
 type Reaction = {
@@ -103,6 +112,11 @@ export default function WebRTCMeeting() {
   const [messageInput, setMessageInput] = useState<string>("");
   const [unreadMessages, setUnreadMessages] = useState<number>(0);
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [localVideoActive, setLocalVideoActive] = useState<boolean>(false);
+  const [handRaised, setHandRaised] = useState<boolean>(false);
+  const [raisedHands, setRaisedHands] = useState<string[]>([]);
+  const [isHost, setIsHost] = useState<boolean>(false);
+  const [hostId, setHostId] = useState<string | null>(null);
 
   // Refs
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -122,10 +136,29 @@ export default function WebRTCMeeting() {
       "getDisplayMedia" in navigator.mediaDevices,
   });
 
-  // Check if on mobile
+  // Check if screen sharing is supported on this device
+  const [canScreenShare, setCanScreenShare] = useState<boolean>(true);
+
+  // Check if on mobile and update screen sharing capability
   useEffect(() => {
     const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      // Check if mobile based on screen size and user agent
+      const isMobileDevice =
+        window.innerWidth < 768 ||
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent,
+        );
+
+      setIsMobile(isMobileDevice);
+
+      // Most mobile browsers don't support screen sharing
+      // Even if they technically have getDisplayMedia, it often doesn't work as expected
+      const screenSharingSupported =
+        "mediaDevices" in navigator &&
+        "getDisplayMedia" in navigator.mediaDevices &&
+        !isMobileDevice;
+
+      setCanScreenShare(screenSharingSupported);
     };
 
     checkIfMobile();
@@ -140,6 +173,7 @@ export default function WebRTCMeeting() {
   const initializeLocalStream = async () => {
     try {
       setError(null);
+      console.log("Initializing local stream...");
 
       if (!browserSupport.getUserMedia) {
         throw new Error("Your browser doesn't support camera access");
@@ -150,10 +184,27 @@ export default function WebRTCMeeting() {
         audio: true,
       });
 
+      console.log("Got local media stream:", stream);
+      console.log("Video tracks:", stream.getVideoTracks().length);
+      console.log("Audio tracks:", stream.getAudioTracks().length);
+
       setLocalStream(stream);
 
+      // Directly set the stream to the video element
       if (localVideoRef.current) {
+        console.log("Setting stream to local video element");
         localVideoRef.current.srcObject = stream;
+
+        // Force play
+        try {
+          await localVideoRef.current.play();
+          console.log("Local video playing");
+        } catch (e) {
+          console.error("Error playing local video:", e);
+          // Even if autoplay fails, the stream should still be visible when played later
+        }
+      } else {
+        console.warn("Local video ref is not available");
       }
 
       return stream;
@@ -178,18 +229,33 @@ export default function WebRTCMeeting() {
     }
   };
 
+  // Ensure local video is displayed correctly
+  useEffect(() => {
+    if (localStream && localVideoRef.current) {
+      // Re-attach stream to video element
+      localVideoRef.current.srcObject = localStream;
+
+      // Force play the video
+      localVideoRef.current.play().catch((e) => {
+        console.error("Error playing local video:", e);
+        // On mobile, autoplay might be blocked without user interaction
+        // We'll set a flag to show a play button if needed
+        if (e.name === "NotAllowedError") {
+          setLocalVideoActive(false);
+        }
+      });
+    }
+  }, [localStream, inRoom]);
+
   // Start screen sharing
   const startScreenShare = async () => {
     try {
-      if (!browserSupport.getDisplayMedia) {
-        throw new Error("Your browser doesn't support screen sharing");
+      if (!canScreenShare) {
+        throw new Error("Screen sharing is not supported on this device");
       }
 
-      // @ts-ignore - TypeScript doesn't recognize getDisplayMedia on mediaDevices
       const displayStream = await navigator.mediaDevices.getDisplayMedia({
-        video: {
-          // cursor: "always",
-        },
+        video: true,
         audio: false,
       });
 
@@ -200,19 +266,32 @@ export default function WebRTCMeeting() {
       if (localStream) {
         const videoTrack = displayStream.getVideoTracks()[0];
 
-        Object.values(peersRef.current).forEach((peer) => {
-          const sender = (peer as any)._senders.find(
-            (s: any) => s.track.kind === "video",
-          );
-
-          if (sender) {
-            sender.replaceTrack(videoTrack);
+        // For each peer connection, replace the video track
+        Object.entries(peersRef.current).forEach(([userId, peer]) => {
+          try {
+            // Use replaceTrack method if available
+            if (peer && typeof peer.replaceTrack === "function") {
+              // Find the video track in the local stream
+              const oldTrack = localStream.getVideoTracks()[0];
+              if (oldTrack) {
+                peer.replaceTrack(oldTrack, videoTrack, localStream);
+              }
+            } else {
+              console.warn(
+                "Peer doesn't support replaceTrack, recreating connection",
+              );
+              // If replaceTrack is not available, we might need to recreate the connection
+              // This is a fallback and might not be needed in most cases
+            }
+          } catch (err) {
+            console.error(`Error replacing track for peer ${userId}:`, err);
           }
         });
 
         // Replace local video
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = displayStream;
+          setLocalVideoActive(true);
         }
       }
 
@@ -252,19 +331,26 @@ export default function WebRTCMeeting() {
       if (localStream) {
         const videoTrack = localStream.getVideoTracks()[0];
 
-        Object.values(peersRef.current).forEach((peer) => {
-          const sender = (peer as any)._senders.find(
-            (s: any) => s.track.kind === "video",
-          );
-
-          if (sender) {
-            sender.replaceTrack(videoTrack);
+        // For each peer connection, replace the video track
+        Object.entries(peersRef.current).forEach(([userId, peer]) => {
+          try {
+            // Use replaceTrack method if available
+            if (peer && typeof peer.replaceTrack === "function") {
+              // Find the screen track
+              const oldTrack = screenStream.getVideoTracks()[0];
+              if (oldTrack && videoTrack) {
+                peer.replaceTrack(oldTrack, videoTrack, localStream);
+              }
+            }
+          } catch (err) {
+            console.error(`Error replacing track for peer ${userId}:`, err);
           }
         });
 
         // Replace local video
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = localStream;
+          setLocalVideoActive(true);
         }
       }
 
@@ -329,6 +415,20 @@ export default function WebRTCMeeting() {
     }
   };
 
+  // Force play local video (for mobile devices that block autoplay)
+  const forcePlayLocalVideo = () => {
+    if (localVideoRef.current) {
+      localVideoRef.current
+        .play()
+        .then(() => {
+          setLocalVideoActive(true);
+        })
+        .catch((err) => {
+          console.error("Error playing video:", err);
+        });
+    }
+  };
+
   // Generate a random room ID if not provided
   const generateRoomId = () => {
     return Math.random().toString(36).substring(2, 7).toUpperCase();
@@ -372,6 +472,10 @@ export default function WebRTCMeeting() {
       }
     });
 
+    peer.on("error", (err) => {
+      console.error(`Peer connection error with ${targetUserId}:`, err);
+    });
+
     return peer;
   };
 
@@ -381,6 +485,7 @@ export default function WebRTCMeeting() {
     name: string,
     stream: MediaStream,
     initiator = false,
+    isHostUser = false,
   ) => {
     const peer = createPeer(userId, stream, initiator);
     peersRef.current[userId] = peer;
@@ -393,6 +498,7 @@ export default function WebRTCMeeting() {
         peer,
         audioEnabled: true,
         videoEnabled: true,
+        isHost: isHostUser,
       },
     ]);
 
@@ -421,19 +527,8 @@ export default function WebRTCMeeting() {
 
       // Generate invite link
       const baseUrl = window.location.origin;
-      const inviteUrl = `${baseUrl}/meeting?room=${finalRoomId}`;
+      const inviteUrl = `${baseUrl}/protected/dashboard/meeting?room=${finalRoomId}`;
       setInviteLink(inviteUrl);
-
-      // Add yourself to participants
-      setParticipants([
-        {
-          id: "local",
-          stream,
-          name: userName,
-          audioEnabled,
-          videoEnabled,
-        },
-      ]);
 
       // Connect to Socket.io server
       const socket = io(
@@ -469,24 +564,73 @@ export default function WebRTCMeeting() {
         ]);
       });
 
-      socket.on("connect_error", (err: Error) => {
+      socket.on("connect_error", (err) => {
         console.error("Socket connection error:", err);
         setError(`Failed to connect to server: ${err.message}`);
         setIsConnecting(false);
       });
 
       // Handle room joined event
-      socket.on("room-joined", ({ roomData }: { roomData: any }) => {
+      socket.on("room-joined", ({ roomData }) => {
         console.log("Room joined:", roomData);
+
+        // Check if this is the first person to join the room
+        const isFirstPerson = roomData.participants.length === 1;
+
+        // If first person, make them the host
+        if (isFirstPerson) {
+          setIsHost(true);
+          setHostId(socket.id || null);
+
+          // Add yourself to participants as host
+          setParticipants([
+            {
+              id: "local",
+              stream,
+              name: userName,
+              audioEnabled,
+              videoEnabled,
+              isHost: true,
+            },
+          ]);
+
+          // Notify server that you're the host
+          socket.emit("set-host", {
+            roomId: finalRoomId,
+            hostId: socket.id,
+          });
+
+          addSystemMessage(`You are the host of this meeting`);
+        } else {
+          // Add yourself to participants (not as host)
+          setParticipants([
+            {
+              id: "local",
+              stream,
+              name: userName,
+              audioEnabled,
+              videoEnabled,
+              isHost: false,
+            },
+          ]);
+
+          // Get the host ID from room data
+          const host = roomData.host;
+          if (host) {
+            setHostId(host);
+          }
+        }
 
         // For each existing user in the room, create a peer connection
         roomData.participants.forEach((participant: any) => {
           if (participant.userId !== socket.id) {
+            const isParticipantHost = participant.userId === roomData.host;
             const peer = addPeer(
               participant.userId,
               participant.userName,
               stream,
               true,
+              isParticipantHost,
             );
           }
         });
@@ -496,21 +640,18 @@ export default function WebRTCMeeting() {
       });
 
       // Handle new user joined
-      socket.on(
-        "user-joined",
-        ({ userId, userName }: { userId: string; userName: string }) => {
-          console.log("User joined:", userId, userName);
+      socket.on("user-joined", ({ userId, userName, isHostUser }) => {
+        console.log("User joined:", userId, userName);
 
-          // Create a peer connection to the new user
-          const peer = addPeer(userId, userName, stream);
+        // Create a peer connection to the new user
+        const peer = addPeer(userId, userName, stream, false, isHostUser);
 
-          // Add system message
-          addSystemMessage(`${userName} joined the meeting`);
-        },
-      );
+        // Add system message
+        addSystemMessage(`${userName} joined the meeting`);
+      });
 
       // Handle user left
-      socket.on("user-left", ({ userId }: { userId: string }) => {
+      socket.on("user-left", ({ userId }) => {
         console.log("User left:", userId);
 
         // Find the participant
@@ -525,6 +666,44 @@ export default function WebRTCMeeting() {
         // Remove from participants
         setParticipants((prev) => prev.filter((p) => p.id !== userId));
 
+        // If the host left, assign a new host
+        if (hostId === userId) {
+          // If there are other participants, make the first one the host
+          if (participants.length > 1) {
+            const newHost = participants.find(
+              (p) => p.id !== "local" && p.id !== userId,
+            );
+            if (newHost) {
+              setHostId(newHost.id);
+
+              // Update participants to reflect new host
+              setParticipants((prev) =>
+                prev.map((p) =>
+                  p.id === newHost.id ? { ...p, isHost: true } : p,
+                ),
+              );
+
+              // If the new host is you, update your host status
+              if (newHost.id === "local") {
+                setIsHost(true);
+                addSystemMessage(`You are now the host of this meeting`);
+              } else {
+                addSystemMessage(
+                  `${newHost.name} is now the host of this meeting`,
+                );
+              }
+
+              // Notify server about new host
+              if (socketRef.current) {
+                socketRef.current.emit("set-host", {
+                  roomId,
+                  hostId: newHost.id,
+                });
+              }
+            }
+          }
+        }
+
         // Add system message
         if (participant) {
           addSystemMessage(`${participant.name} left the meeting`);
@@ -532,96 +711,117 @@ export default function WebRTCMeeting() {
       });
 
       // Handle signaling
-      socket.on(
-        "signal",
-        ({ userId, signal }: { userId: string; signal: any }) => {
-          console.log("Received signal from:", userId);
+      socket.on("signal", ({ userId, signal }) => {
+        console.log("Received signal from:", userId);
 
-          if (peersRef.current[userId]) {
-            peersRef.current[userId].signal(signal);
-          }
-        },
-      );
+        if (peersRef.current[userId]) {
+          peersRef.current[userId].signal(signal);
+        }
+      });
 
       // Handle chat messages
-      socket.on(
-        "chat-message",
-        ({
-          senderId,
-          senderName,
-          text,
-          timestamp,
-        }: {
-          senderId: string;
-          senderName: string;
-          text: string;
-          timestamp: number;
-        }) => {
-          receiveMessage(senderId, senderName, text);
-        },
-      );
+      socket.on("chat-message", ({ senderId, senderName, text, timestamp }) => {
+        receiveMessage(senderId, senderName, text);
+      });
 
       // Handle reactions
-      socket.on(
-        "reaction",
-        ({
-          participantId,
+      socket.on("reaction", ({ participantId, emoji }) => {
+        const newReaction: Reaction = {
+          id: Math.random().toString(36).substring(2, 9),
           emoji,
-        }: {
-          participantId: string;
-          emoji: string;
-        }) => {
-          const newReaction: Reaction = {
-            id: Math.random().toString(36).substring(2, 9),
-            emoji,
-            participantId,
-            timestamp: Date.now(),
-          };
+          participantId,
+          timestamp: Date.now(),
+        };
 
-          setReactions((prev) => [...prev, newReaction]);
+        setReactions((prev) => [...prev, newReaction]);
 
-          // Remove the reaction after 5 seconds
-          setTimeout(() => {
-            setReactions((prev) => prev.filter((r) => r.id !== newReaction.id));
-          }, 5000);
-        },
-      );
+        // Remove the reaction after 5 seconds
+        setTimeout(() => {
+          setReactions((prev) => prev.filter((r) => r.id !== newReaction.id));
+        }, 5000);
+      });
 
       // Handle audio/video state changes
-      socket.on(
-        "audio-state-changed",
-        ({ userId, enabled }: { userId: string; enabled: boolean }) => {
-          setParticipants((prev) =>
-            prev.map((p) =>
-              p.id === userId ? { ...p, audioEnabled: enabled } : p,
-            ),
-          );
-        },
-      );
+      socket.on("audio-state-changed", ({ userId, enabled }) => {
+        setParticipants((prev) =>
+          prev.map((p) =>
+            p.id === userId ? { ...p, audioEnabled: enabled } : p,
+          ),
+        );
+      });
 
-      socket.on(
-        "video-state-changed",
-        ({ userId, enabled }: { userId: string; enabled: boolean }) => {
-          setParticipants((prev) =>
-            prev.map((p) =>
-              p.id === userId ? { ...p, videoEnabled: enabled } : p,
-            ),
-          );
-        },
-      );
+      socket.on("video-state-changed", ({ userId, enabled }) => {
+        setParticipants((prev) =>
+          prev.map((p) =>
+            p.id === userId ? { ...p, videoEnabled: enabled } : p,
+          ),
+        );
+      });
 
       // Handle screen sharing
-      socket.on("screen-share-started", ({ userId }: { userId: string }) => {
+      socket.on("screen-share-started", ({ userId }) => {
         const participant = participants.find((p) => p.id === userId);
         if (participant) {
           addSystemMessage(`${participant.name} started sharing their screen`);
         }
       });
 
-      socket.on("screen-share-stopped", ({ userId }: { userId: string }) => {
+      // Handle screen sharing
+      socket.on("screen-share-stopped", ({ userId }) => {
         const participant = participants.find((p) => p.id === userId);
         if (participant) {
           addSystemMessage(`${participant.name} stopped sharing their screen`);
+        }
+      });
+
+      socket.on("hand-raised", ({ userId, userName }) => {
+        setRaisedHands((prev) => [...prev, userId]);
+        addSystemMessage(`${userName} raised their hand`);
+      });
+
+      socket.on("hand-lowered", ({ userId, userName }) => {
+        setRaisedHands((prev) => prev.filter((id) => id !== userId));
+        addSystemMessage(`${userName} lowered their hand`);
+      });
+
+      // Handle host changes
+      socket.on("host-changed", ({ hostId, hostName }) => {
+        setHostId(hostId);
+
+        // Update participants to reflect new host
+        setParticipants((prev) =>
+          prev.map((p) => ({
+            ...p,
+            isHost:
+              p.id === hostId || (p.id === "local" && hostId === socket.id),
+          })),
+        );
+
+        // Update local host status
+        setIsHost(socket.id === hostId);
+
+        addSystemMessage(`${hostName} is now the host of this meeting`);
+      });
+
+      // Handle mute all
+      socket.on("mute-all", ({ hostId, hostName }) => {
+        // Only mute if you're not the host
+        if (socket.id !== hostId) {
+          // Mute local audio
+          if (localStream) {
+            const audioTracks = localStream.getAudioTracks();
+            audioTracks.forEach((track) => {
+              track.enabled = false;
+            });
+            setAudioEnabled(false);
+          }
+
+          addSystemMessage(`${hostName} has muted all participants`);
+
+          toast({
+            title: "You've been muted",
+            description: "The host has muted all participants",
+          });
         }
       });
     } catch (err) {
@@ -670,6 +870,8 @@ export default function WebRTCMeeting() {
     setChatMessages([]);
     setUnreadMessages(0);
     setIsChatOpen(false);
+    setIsHost(false);
+    setHostId(null);
     peersRef.current = {};
   };
 
@@ -849,6 +1051,44 @@ export default function WebRTCMeeting() {
     };
   }, []);
 
+  const toggleRaiseHand = () => {
+    const newHandRaised = !handRaised;
+    setHandRaised(newHandRaised);
+
+    // Add system message to chat
+    addSystemMessage(
+      `${userName} ${newHandRaised ? "raised" : "lowered"} their hand`,
+    );
+
+    // Notify other participants
+    if (socketRef.current) {
+      socketRef.current.emit(newHandRaised ? "hand-raised" : "hand-lowered", {
+        roomId,
+        userName,
+      });
+    }
+  };
+
+  // Mute all participants (host only)
+  const muteAllParticipants = () => {
+    if (!isHost) return;
+
+    // Notify server to mute all participants
+    if (socketRef.current) {
+      socketRef.current.emit("mute-all", {
+        roomId,
+        hostName: userName,
+      });
+
+      addSystemMessage(`You muted all participants`);
+
+      toast({
+        title: "All participants muted",
+        description: "You have muted all participants in the meeting",
+      });
+    }
+  };
+
   // Room join form
   if (!inRoom) {
     return (
@@ -923,7 +1163,7 @@ export default function WebRTCMeeting() {
 
   // Meeting room UI
   return (
-    <div className="flex flex-col w-full h-[calc(90vh-2rem)]  mx-auto bg-muted dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+    <div className="flex flex-col w-full h-[90vh]  mx-auto bg-muted dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
       <div className="flex items-center justify-between w-full p-4 border-b">
         <div className="flex items-center gap-2">
           <h2 className="text-2xl font-bold">Meeting: {roomId}</h2>
@@ -985,7 +1225,7 @@ export default function WebRTCMeeting() {
         </Alert>
       )}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden gap-4">
         {/* Main content area with videos */}
         <div
           className={cn(
@@ -1007,25 +1247,59 @@ export default function WebRTCMeeting() {
               <Card key={participant.id} className="overflow-hidden">
                 <div className="relative aspect-video bg-gray-900 dark:bg-gray-950">
                   {participant.id === "local" ? (
-                    // Local video
-                    <video
-                      ref={localVideoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className={cn(
-                        "w-full h-full object-cover",
-                        !videoEnabled && "hidden",
+                    // Local video with simplified display logic and debug info
+                    <div className="relative w-full h-full">
+                      <video
+                        ref={localVideoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full h-full object-cover"
+                        style={{ display: videoEnabled ? "block" : "none" }}
+                        onLoadedMetadata={() => {
+                          console.log("Local video metadata loaded");
+                          if (localVideoRef.current) {
+                            localVideoRef.current
+                              .play()
+                              .then(() =>
+                                console.log("Local video playing successfully"),
+                              )
+                              .catch((e) =>
+                                console.error("Error playing local video:", e),
+                              );
+                          }
+                        }}
+                      />
+                      {videoEnabled && (
+                        <div className="absolute bottom-10 left-0 right-0 text-center bg-black/50 text-white py-1 text-xs">
+                          {localStream ? "Camera active" : "No camera stream"}
+                        </div>
                       )}
-                    />
+                      {!videoEnabled && (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-800 dark:bg-gray-900">
+                          <Avatar className="w-24 h-24">
+                            <AvatarImage
+                              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${participant.name}`}
+                            />
+                            <AvatarFallback>
+                              {participant.name.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                      )}
+                    </div>
                   ) : (
-                    // Remote video
+                    // Remote video (keep this part as is)
                     <video
                       ref={(el) => {
                         userVideoRefs.current[participant.id] = el;
                         // If we already have a stream for this participant, set it
                         if (el && participant.stream) {
                           el.srcObject = participant.stream;
+                          // Force play for mobile
+                          el.play().catch((e) =>
+                            console.error("Error playing remote video:", e),
+                          );
                         }
                       }}
                       autoPlay
@@ -1038,7 +1312,8 @@ export default function WebRTCMeeting() {
                   )}
 
                   {/* Show avatar when video is off */}
-                  {((participant.id === "local" && !videoEnabled) ||
+                  {((participant.id === "local" &&
+                    (!videoEnabled || !localVideoActive)) ||
                     (participant.id !== "local" &&
                       !participant.videoEnabled)) && (
                     <div className="w-full h-full flex items-center justify-center bg-gray-800 dark:bg-gray-900">
@@ -1077,8 +1352,25 @@ export default function WebRTCMeeting() {
                     <div className="bg-black/60 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
                       {participant.name}
                       {participant.id === "local" && " (You)"}
+                      {participant.isHost && (
+                        <Crown
+                          size={14}
+                          className="text-yellow-400 ml-1"
+                          aria-label="Meeting Host"
+                        />
+                      )}
                       {!participant.audioEnabled && (
                         <MicOff size={14} className="text-red-500" />
+                      )}
+                      {(participant.id === "local"
+                        ? handRaised
+                        : raisedHands.includes(participant.id)) && (
+                        <span
+                          className="ml-1 text-yellow-400"
+                          title="Hand raised"
+                        >
+                          ✋
+                        </span>
                       )}
                     </div>
 
@@ -1200,16 +1492,52 @@ export default function WebRTCMeeting() {
           {videoEnabled ? "Stop Video" : "Start Video"}
         </Button>
 
-        <Button
-          onClick={isScreenSharing ? stopScreenShare : startScreenShare}
-          variant={isScreenSharing ? "destructive" : "default"}
-          className="flex items-center gap-2"
-          title={isScreenSharing ? "Stop sharing screen" : "Share screen"}
-          disabled={!browserSupport.getDisplayMedia}
-        >
-          <Monitor size={18} />
-          {isScreenSharing ? "Stop Sharing" : "Share Screen"}
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button
+                  onClick={isScreenSharing ? stopScreenShare : startScreenShare}
+                  variant={isScreenSharing ? "destructive" : "default"}
+                  className="flex items-center gap-2"
+                  title={
+                    isScreenSharing ? "Stop sharing screen" : "Share screen"
+                  }
+                  disabled={!canScreenShare}
+                >
+                  <Monitor size={18} />
+                  {isScreenSharing ? "Stop Sharing" : "Share Screen"}
+                </Button>
+              </div>
+            </TooltipTrigger>
+            {!canScreenShare && (
+              <TooltipContent>
+                <p>Screen sharing is not available on mobile devices</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+
+        {isHost && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={muteAllParticipants}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  title="Mute all participants"
+                >
+                  <VolumeX size={18} />
+                  Mute All
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Mute all participants (host only)</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
 
         <Popover>
           <PopoverTrigger asChild>
@@ -1236,6 +1564,16 @@ export default function WebRTCMeeting() {
             </div>
           </PopoverContent>
         </Popover>
+
+        <Button
+          onClick={toggleRaiseHand}
+          variant={handRaised ? "default" : "outline"}
+          className="flex items-center gap-2"
+          title={handRaised ? "Lower hand" : "Raise hand"}
+        >
+          <span className="text-base">✋</span>
+          {handRaised ? "Lower Hand" : "Raise Hand"}
+        </Button>
 
         <Button
           onClick={toggleChat}
