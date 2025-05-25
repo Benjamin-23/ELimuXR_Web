@@ -153,12 +153,23 @@ io.on("connection", (socket) => {
     });
 
     // Handle mute all (host only)
+    // Handle mute all event
     socket.on("mute-all", ({ roomId, hostName }) => {
+      // Verify the sender is actually the host
+      const room = rooms[roomId];
       if (room && room.host === socket.id) {
-        socket.to(roomId).emit("mute-all", {
-          hostId: socket.id,
-          hostName,
-        });
+        // Broadcast to all participants except host
+        socket.to(roomId).emit("mute-all", { hostId: socket.id, hostName });
+      }
+    });
+
+    // Handle unmute raised hand event
+    socket.on("unmute-raised-hand", ({ roomId, userId, hostName }) => {
+      // Verify the sender is actually the host
+      const room = rooms[roomId];
+      if (room && room.host === socket.id) {
+        // Send to the specific user
+        io.to(userId).emit("unmute-raised-hand", { userId, hostName });
       }
     });
   });

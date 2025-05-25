@@ -1,6 +1,6 @@
 "use client";
 
-import type React from "react";
+import React from "react";
 import { useState, useRef, useEffect } from "react";
 import {
   Mic,
@@ -52,6 +52,7 @@ import {
 } from "@/components/ui/tooltip";
 import { io, type Socket } from "socket.io-client";
 import Peer from "simple-peer";
+import ChatPanel from "./meeting-chat";
 
 type Participant = {
   id: string;
@@ -258,6 +259,17 @@ export default function WebRTCMeeting() {
         video: true,
         audio: false,
       });
+      // .then((stream) => {
+      //   const screenTrack = stream.getTracks()[0];
+      //   sender.current
+      //     .find(sender.track.kind === "video")
+      //     .replaceTrack(screenTrack);
+      //   screenTrack.onended = () => {
+      //     senders.current
+      //       .find(sender.track.kind === "video")
+      //       .replaceTrack(userStream.current.getTracks()[1]);
+      //   };
+      // });
 
       setScreenStream(displayStream);
       setIsScreenSharing(true);
@@ -301,7 +313,7 @@ export default function WebRTCMeeting() {
       });
 
       // Add system message to chat
-      addSystemMessage(`${userName} started sharing their screen`);
+      // addSystemMessage(`${userName} started sharing their screen`);
 
       // Notify other participants about screen sharing
       if (socketRef.current) {
@@ -358,7 +370,7 @@ export default function WebRTCMeeting() {
       setIsScreenSharing(false);
 
       // Add system message to chat
-      addSystemMessage(`${userName} stopped sharing their screen`);
+      // addSystemMessage(`${userName} stopped sharing their screen`);
 
       // Notify other participants about screen sharing stopped
       if (socketRef.current) {
@@ -377,9 +389,9 @@ export default function WebRTCMeeting() {
       setAudioEnabled(!audioEnabled);
 
       // Add system message to chat
-      addSystemMessage(
-        `${userName} ${!audioEnabled ? "unmuted" : "muted"} their microphone`,
-      );
+      // addSystemMessage(
+      //   `${userName} ${!audioEnabled ? "unmuted" : "muted"} their microphone`,
+      // );
 
       // Notify other participants about audio state change
       if (socketRef.current) {
@@ -401,9 +413,9 @@ export default function WebRTCMeeting() {
       setVideoEnabled(!videoEnabled);
 
       // Add system message to chat
-      addSystemMessage(
-        `${userName} ${!videoEnabled ? "turned on" : "turned off"} their camera`,
-      );
+      // addSystemMessage(
+      //   `${userName} ${!videoEnabled ? "turned on" : "turned off"} their camera`,
+      // );
 
       // Notify other participants about video state change
       if (socketRef.current) {
@@ -647,7 +659,7 @@ export default function WebRTCMeeting() {
         const peer = addPeer(userId, userName, stream, false, isHostUser);
 
         // Add system message
-        addSystemMessage(`${userName} joined the meeting`);
+        // addSystemMessage(`${userName} joined the meeting`);
       });
 
       // Handle user left
@@ -915,18 +927,6 @@ export default function WebRTCMeeting() {
     }, 3000);
   };
 
-  // Toggle chat panel
-  const toggleChat = () => {
-    setIsChatOpen(!isChatOpen);
-    if (!isChatOpen) {
-      setUnreadMessages(0);
-      // Focus the input field when opening chat
-      setTimeout(() => {
-        messageInputRef.current?.focus();
-      }, 100);
-    }
-  };
-
   // Add a system message to the chat
   const addSystemMessage = (text: string) => {
     const newMessage: ChatMessage = {
@@ -947,22 +947,20 @@ export default function WebRTCMeeting() {
   };
 
   // Send a chat message
-  const sendMessage = () => {
-    if (!messageInput.trim()) return;
+  const handleSendMessage = (text: string) => {
+    if (!text.trim()) return;
 
     const newMessage: ChatMessage = {
       id: Math.random().toString(36).substring(2, 9),
       senderId: "local",
       senderName: userName,
-      text: messageInput.trim(),
+      text: text.trim(),
       timestamp: Date.now(),
       type: "text",
     };
 
     setChatMessages((prev) => [...prev, newMessage]);
-    setMessageInput("");
 
-    // Send to other participants
     if (socketRef.current) {
       socketRef.current.emit("chat-message", {
         roomId,
@@ -988,9 +986,37 @@ export default function WebRTCMeeting() {
 
     setChatMessages((prev) => [...prev, newMessage]);
 
-    // Increment unread count if chat is closed
     if (!isChatOpen) {
       setUnreadMessages((prev) => prev + 1);
+    }
+  };
+
+  // const addSystemMessage = (text: string) => {
+  //   const newMessage: ChatMessage = {
+  //     id: Math.random().toString(36).substring(2, 9),
+  //     senderId: "system",
+  //     senderName: "System",
+  //     text,
+  //     timestamp: Date.now(),
+  //     type: "system",
+  //   };
+
+  //   setChatMessages((prev) => [...prev, newMessage]);
+
+  //   if (!isChatOpen) {
+  //     setUnreadMessages((prev) => prev + 1);
+  //   }
+  // };
+
+  // Toggle chat panel
+  const toggleChat = () => {
+    setIsChatOpen(!isChatOpen);
+    if (!isChatOpen) {
+      setUnreadMessages(0);
+      // Focus the input field when opening chat
+      setTimeout(() => {
+        messageInputRef.current?.focus();
+      }, 100);
     }
   };
 
@@ -1017,12 +1043,12 @@ export default function WebRTCMeeting() {
   }, []);
 
   // Handle Enter key in message input
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
+  // const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  //   if (e.key === "Enter" && !e.shiftKey) {
+  //     e.preventDefault();
+  //     handleSendMessage( );
+  //   }
+  // };
 
   // Clean up on unmount
   useEffect(() => {
@@ -1080,7 +1106,7 @@ export default function WebRTCMeeting() {
         hostName: userName,
       });
 
-      addSystemMessage(`You muted all participants`);
+      // addSystemMessage(`You muted all participants`);
 
       toast({
         title: "All participants muted",
@@ -1088,6 +1114,86 @@ export default function WebRTCMeeting() {
       });
     }
   };
+
+  // Unmute raised hands (host only)
+  const unmuteRaisedHands = () => {
+    if (!isHost || raisedHands.length === 0) return;
+
+    // Notify server to unmute each raised hand
+    if (socketRef.current) {
+      raisedHands.forEach((userId) => {
+        socketRef.current?.emit("unmute-raised-hand", {
+          roomId,
+          userId,
+          hostName: userName,
+        });
+      });
+
+      addSystemMessage(`You unmuted ${raisedHands.length} raised hand(s)`);
+
+      toast({
+        title: "Raised hands unmuted",
+        description: `You have unmuted ${raisedHands.length} participant(s)`,
+      });
+    }
+  };
+
+  // video session
+  //
+
+  const ParticipantVideo = React.memo(
+    ({
+      participant,
+      onDoubleClick,
+      isLocal,
+      className = "",
+      smallView = false,
+    }: {
+      participant: Participant;
+      onDoubleClick: () => void;
+      isLocal: boolean;
+      className?: string;
+      smallView?: boolean;
+    }) => {
+      const videoRef = useRef<HTMLVideoElement>(null);
+
+      useEffect(() => {
+        if (videoRef.current && participant.stream) {
+          videoRef.current.srcObject = participant.stream;
+        }
+      }, [participant.stream]);
+
+      return (
+        <Card
+          className={cn("overflow-hidden", className, {
+            "cursor-pointer": !smallView && participant.id === "local",
+          })}
+          onDoubleClick={onDoubleClick}
+        >
+          <div
+            className={cn("relative", {
+              "aspect-video": !smallView,
+              "h-full": smallView,
+            })}
+          >
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted={isLocal}
+              className={cn(
+                "w-full h-full object-cover",
+                !participant.videoEnabled && "hidden",
+              )}
+            />
+
+            {/* Avatar fallback and other UI elements */}
+            {/* ... keep your existing participant info overlay ... */}
+          </div>
+        </Card>
+      );
+    },
+  );
 
   // Room join form
   if (!inRoom) {
@@ -1250,6 +1356,7 @@ export default function WebRTCMeeting() {
                     // Local video with simplified display logic and debug info
                     <div className="relative w-full h-full">
                       <video
+                        controls
                         ref={localVideoRef}
                         autoPlay
                         playsInline
@@ -1360,7 +1467,16 @@ export default function WebRTCMeeting() {
                         />
                       )}
                       {!participant.audioEnabled && (
-                        <MicOff size={14} className="text-red-500" />
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <MicOff size={14} className="text-red-500" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Microphone muted</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                       {(participant.id === "local"
                         ? handRaised
@@ -1392,93 +1508,36 @@ export default function WebRTCMeeting() {
 
         {/* Chat panel - only shown when isChatOpen is true */}
         {(isChatOpen || !isMobile) && (
-          <div
-            className={cn(
-              "border-l flex flex-col bg-white dark:bg-gray-800 transition-all duration-300 ease-in-out",
-              isChatOpen ? "w-80" : "w-0 overflow-hidden",
-              isMobile && "absolute inset-0 z-10",
-            )}
-          >
-            <div className="flex items-center justify-between p-3 border-b">
-              <h3 className="font-semibold">Chat</h3>
-              {isMobile && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleChat}
-                  className="h-8 w-8"
-                >
-                  <X size={18} />
-                </Button>
-              )}
-            </div>
-
-            {/* Chat messages */}
-            <ScrollArea className="flex-1 p-3">
-              <div className="space-y-4">
-                {chatMessages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={cn(
-                      "flex flex-col max-w-[85%] rounded-lg p-3 text-sm",
-                      message.type === "system"
-                        ? "bg-gray-100 dark:bg-gray-700 mx-auto text-center italic"
-                        : message.senderId === "local"
-                          ? "bg-blue-100 dark:bg-blue-900 ml-auto"
-                          : "bg-gray-100 dark:bg-gray-700 mr-auto",
-                    )}
-                  >
-                    {message.type !== "system" && (
-                      <div className="font-semibold text-xs mb-1">
-                        {message.senderId === "local"
-                          ? "You"
-                          : message.senderName}
-                      </div>
-                    )}
-                    <div>{message.text}</div>
-                    <div className="text-xs opacity-70 mt-1 self-end">
-                      {formatTime(message.timestamp)}
-                    </div>
-                  </div>
-                ))}
-                <div ref={chatEndRef} />
-              </div>
-            </ScrollArea>
-
-            {/* Message input */}
-            <div className="p-3 border-t">
-              <div className="flex gap-2">
-                <Input
-                  ref={messageInputRef}
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type a message..."
-                  className="flex-1"
-                />
-                <Button
-                  size="icon"
-                  onClick={sendMessage}
-                  disabled={!messageInput.trim()}
-                >
-                  <Send size={18} />
-                </Button>
-              </div>
-            </div>
-          </div>
+          <ChatPanel
+            messages={chatMessages}
+            onSend={handleSendMessage}
+            isOpen={isChatOpen}
+            onClose={toggleChat}
+            unreadCount={unreadMessages}
+            isMobile={isMobile}
+          />
         )}
       </div>
 
       {/* Controls */}
-      <div className="flex flex-wrap gap-3 justify-center p-3 bg-gray-100 dark:bg-gray-900 border-t">
+      <div className="flex flex-wrap gap-3 p-3 bg-gray-100 dark:bg-gray-900 border-t">
         <Button
           onClick={toggleAudio}
           variant={audioEnabled ? "default" : "destructive"}
           className="flex items-center gap-2"
           title={audioEnabled ? "Mute microphone" : "Unmute microphone"}
         >
-          {audioEnabled ? <Mic size={18} /> : <MicOff size={18} />}
-          {audioEnabled ? "Mute" : "Unmute"}
+          {audioEnabled ? (
+            <>
+              <Mic size={18} />
+              {/* <span>Mute</span> */}
+            </>
+          ) : (
+            <>
+              <MicOff size={18} className="text-white" />
+              {/* <span className="text-white">Unmute</span> */}
+            </>
+          )}
         </Button>
 
         <Button
@@ -1489,7 +1548,7 @@ export default function WebRTCMeeting() {
           disabled={isScreenSharing}
         >
           {videoEnabled ? <Video size={18} /> : <VideoOff size={18} />}
-          {videoEnabled ? "Stop Video" : "Start Video"}
+          {/* {videoEnabled ? "Stop Video" : "Start Video"} */}
         </Button>
 
         <TooltipProvider>
@@ -1506,7 +1565,7 @@ export default function WebRTCMeeting() {
                   disabled={!canScreenShare}
                 >
                   <Monitor size={18} />
-                  {isScreenSharing ? "Stop Sharing" : "Share Screen"}
+                  {/* {isScreenSharing ? "Stop Sharing" : "Share Screen"} */}
                 </Button>
               </div>
             </TooltipTrigger>
@@ -1519,26 +1578,47 @@ export default function WebRTCMeeting() {
         </TooltipProvider>
 
         {isHost && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={muteAllParticipants}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  title="Mute all participants"
-                >
-                  <VolumeX size={18} />
-                  Mute All
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Mute all participants (host only)</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
+          <>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={muteAllParticipants}
+                    variant="outline"
+                    className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white"
+                    title="Mute all participants"
+                  >
+                    <VolumeX size={18} />
+                    <span>Mute All</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Mute all participants (host only)</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={unmuteRaisedHands}
+                    variant="outline"
+                    className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white"
+                    title="Unmute raised hands"
+                    disabled={raisedHands.length === 0}
+                  >
+                    <Mic size={18} />
+                    <span>Unmute Hands ({raisedHands.length})</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Unmute participants with raised hands (host only)</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </>
+        )}
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" className="flex items-center gap-2">
@@ -1572,7 +1652,7 @@ export default function WebRTCMeeting() {
           title={handRaised ? "Lower hand" : "Raise hand"}
         >
           <span className="text-base">✋</span>
-          {handRaised ? "Lower Hand" : "Raise Hand"}
+          {/* {handRaised ? "Lower Hand" : "Raise Hand"} */}
         </Button>
 
         <Button

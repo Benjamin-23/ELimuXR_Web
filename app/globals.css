@@ -66,4 +66,23 @@
   body {
     @apply bg-background text-foreground;
   }
+  .video-fullscreen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .sidebar-participants {
+    scrollbar-width: thin;
+    scrollbar-color: #888 transparent;
+  }
+
+  .sidebar-participants::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .sidebar-participants::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 3px;
+  }
 }
