@@ -82,11 +82,14 @@ const curriculum: Curriculum = {
   },
   "8": {
     "Integrated Science": {
-      "Living Things and their Environment": {
-        "The Cells": [
-          "The Cell",
+      "1.0. Living Things and their Environment": {
+        "The Cell": [
           "Components of a Plant Cell and their Functions",
           "Components of an Animal Cell and their Functions",
+        ],
+        "Movement of Materials In and Out of the Cell": [
+          "Structure and Properties of the Cell Membrane",
+          "Cellular Transport: Diffusion, Osmosis, and Active Transport",
         ],
       },
       "Human Body Systems": {
@@ -98,11 +101,11 @@ const curriculum: Curriculum = {
   },
   "9": {
     "Integrated Science": {
-      "Human Body Systems": {
-        "Digestive System": ["The Digestive System"],
+      "1.0. Mixtures, Elements and Compounds": {
+        "Structure of the Atom": ["Structure of the atom", "Metals and Alloys"],
       },
-      "Mixtures, Elements and Compounds": {
-        "Atomic Structure": ["Structure of the atom", "Metals and Alloys"],
+      "2.0. Living Things and their Environment": {
+        "Nutrition in Animals ": ["The Digestive System"],
       },
     },
     Mathematics: "coming-soon",
