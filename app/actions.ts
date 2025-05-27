@@ -8,33 +8,77 @@ import { redirect } from "next/navigation";
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
+  const fullName = formData.get("fullName")?.toString();
+  const phone = formData.get("phone")?.toString();
+
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
 
-  if (!email || !password) {
+  // Validate all required fields
+  if (!email || !password || !fullName || !phone) {
     return encodedRedirect(
       "error",
       "/sign-up",
-      "Email and password are required",
+      "All fields are required (email, password, full name, phone number)",
     );
   }
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${origin}/auth/callback`,
-    },
-  });
+  // Validate phone number format (simple example)
+  if (!/^\+?[\d\s-]+$/.test(phone)) {
+    return encodedRedirect(
+      "error",
+      "/sign-up",
+      "Please enter a valid phone number",
+    );
+  }
 
-  if (error) {
-    console.error(error.code + " " + error.message);
-    return encodedRedirect("error", "/sign-up", error.message);
-  } else {
+  try {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${origin}/auth/callback`,
+        data: {
+          full_name: fullName,
+          phone: phone,
+        },
+      },
+    });
+
+    if (error) {
+      console.error(error.code + " " + error.message);
+      return encodedRedirect("error", "/sign-up", error.message);
+    }
+
+    // Optionally insert additional user data into your public.users table
+    const { error: dbError } = await supabase.from("users").insert({
+      email,
+      full_name: fullName,
+      phone,
+      // Add any other user fields you need
+    });
+
+    if (dbError) {
+      console.error("Database error:", dbError);
+      // You might want to handle this differently since auth succeeded
+      return encodedRedirect(
+        "success",
+        "/sign-up",
+        "Account created! Please check your email for verification. Some profile data may not have saved correctly.",
+      );
+    }
+
     return encodedRedirect(
       "success",
       "/sign-up",
       "Thanks for signing up! Please check your email for a verification link.",
+    );
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    return encodedRedirect(
+      "error",
+      "/sign-up",
+      "An unexpected error occurred during signup",
     );
   }
 };

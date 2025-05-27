@@ -15,43 +15,43 @@ export default function HomePage() {
   const featuredCourses = [
     {
       id: 1,
-      title: "Mathematics Fundamentals",
+      title: "Pythagorean Theorem",
       description: "Master basic concepts for Grades 7-9",
       rating: 4.8,
       students: 1245,
-      image: "/math-course.jpg",
+      image: "/assets/images/mathematics.png",
     },
     {
       id: 2,
-      title: "Science Explorers",
-      description: "Hands-on experiments and activities",
+      title: "The Human Circulatory System",
+      description: "3D models & 3D animated lessons",
       rating: 4.6,
       students: 892,
-      image: "/science-lab.jpg",
+      image: "/assets/images/The-Human-circulatory-system.png",
     },
     {
       id: 3,
-      title: "Technical Studies Intro",
+      title: "Scratch Programming Intro",
       description: "Learn essential technical skills",
       rating: 4.7,
       students: 756,
-      image: "/tech-course.jpg",
+      image: "/assets/images/Introduction-to-cratch-programming.png",
     },
   ];
 
   const popularSubjects = [
     {
-      name: "Algebra",
+      name: "Mathematics",
       icon: <BookOpen className="h-5 w-5" />,
       courses: 12,
     },
     {
-      name: "Biology",
+      name: "Integrated Science",
       icon: <BookOpen className="h-5 w-5" />,
       courses: 8,
     },
     {
-      name: "Geometry",
+      name: "Pre-Technical Studies",
       icon: <BookOpen className="h-5 w-5" />,
       courses: 10,
     },
@@ -67,14 +67,14 @@ export default function HomePage() {
               Welcome to <span className="text-primary">ElimuXR</span>
             </h1>
             <p className="text-background mb-6 max-w-2xl mx-auto">
-              Learning STEM the Smart Way
+              Learn STEM the Smart Way
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild className="w-full sm:w-auto">
-                <Link href="/signup">Get Started</Link>
+                <Link href="/sign-in">Get Started</Link>
               </Button>
               <Button variant="outline" asChild className="w-full sm:w-auto">
-                <Link href="/courses">Browse Courses</Link>
+                <Link href="/">Browse Courses</Link>
               </Button>
             </div>
           </div>
@@ -201,7 +201,7 @@ export default function HomePage() {
             science skills
           </p>
           <Button asChild size="lg">
-            <Link href="/signup">Create Free Account</Link>
+            <Link href="/sign-up">Create Free Account</Link>
           </Button>
         </section>
       </div>

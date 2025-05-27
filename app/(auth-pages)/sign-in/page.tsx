@@ -11,8 +11,15 @@ export default async function Login(props: { searchParams: Promise<Message> }) {
   return (
     <div className=" flex w-screen justify-center items-center h-screen">
       <div className="flex">
-        <form className="flex-1 flex flex-col min-w-64 ">
-          <img src="@/app/logo.png" alt="Logo" className="w-16 h-16 mb-4" />
+        <form className="flex-1 flex flex-col w-fit md:w-96  ">
+          <div className="  flex">
+            <img
+              src="/assets/images/logo.png"
+              alt="Logo"
+              className="w-32 h-32 mb-4"
+            />
+          </div>
+
           <h1 className="text-2xl font-medium">Sign in</h1>
           <p className="text-sm text-foreground">
             Don't have an account?{" "}
